@@ -1,0 +1,13 @@
+Typography reference: https://github.com/Yunfan-He/coffee-lab-view
+Current workspace typography:
+Chinese headings: Ma Shan Zheng (MaShanZheng-Regular.ttf)
+Source: https://github.com/google/fonts/tree/main/ofl/mashanzheng
+Chinese body: LXGW WenKai Screen v1.530 (LXGWWenKaiScreen.ttf)
+Source: https://github.com/lxgw/LxgwWenKai-Screen/releases/tag/v1.530
+English and numerals: Nunito, loaded first in each font stack.
+Source: https://github.com/google/fonts/tree/main/ofl/nunito
+Nunito was obtained from the reference's published font assets under assets/.
+Site name only (Pour Over Database): Caveat, restored from the original reference assets.
+Source: https://github.com/google/fonts/tree/main/ofl/caveat
+All four fonts are bundled with their SIL Open Font License texts.
+Previous Yozai assets/licenses are archived under old_versions/2026-11-07/static/fonts/.
