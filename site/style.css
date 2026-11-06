@@ -24,7 +24,7 @@ h2,h3{letter-spacing:-.005em}
 @media(max-width:1600px){.detail-layout,.bean-layout{grid-template-columns:minmax(0,1fr)}.evidence>.gallery,.bean-photo{display:none}.narrow-photo{display:block;margin-top:11.2px}.narrow-photo .gallery{max-width:460px}.detail-layout{gap:11.2px}.bean-layout{gap:0}}
 @media(max-width:1200px){.workspace,body[data-page=beans] .workspace,body[data-page=terms] .workspace{grid-template-columns:minmax(0,1fr);gap:64px}.items{height:360px;max-height:360px}.filters{grid-template-columns:repeat(4,minmax(0,1fr))}}
 @media(max-width:900px){main{padding:56px 16px 16px}}
-@media(max-width:640px){body{--sidebar:0px}#sidebar{width:300px;box-shadow:0 0 0 100vmax #0006}#sidebar-open{display:inline-flex}body:not(.sidebar-mobile-open) #sidebar{display:none}.fields,.text-fields{grid-template-columns:minmax(0,1fr)}.field-empty{display:none}.filters{grid-template-columns:repeat(2,minmax(0,1fr))}.tabs{gap:16px}.popover-panel{position:fixed;left:20px;right:20px;top:100px;width:auto!important;min-width:0;max-height:70vh;overflow:auto}h2,h3{overflow-wrap:anywhere}.field{grid-template-columns:calc(100% / 3.3 - 8px) minmax(0,1fr)}}
+@media(max-width:640px){body{--sidebar:0px}#sidebar{width:300px;box-shadow:0 0 0 100vmax #0006}#sidebar-open{display:inline-flex}body:not(.sidebar-mobile-open) #sidebar{display:none}.fields,.text-fields{grid-template-columns:minmax(0,1fr)}.field-empty{display:none}.filters{grid-template-columns:repeat(4,minmax(0,1fr))}.tabs{gap:16px}.popover-panel{position:fixed;left:20px;right:20px;top:100px;width:auto!important;min-width:0;max-height:70vh;overflow:auto}h2,h3{overflow-wrap:anywhere}.field{grid-template-columns:calc(100% / 3.3 - 8px) minmax(0,1fr)}}
 
 /* The vocabulary workspace uses the same compact category and alias layout. */
 body[data-page=terms] h1{font-family:Caveat,Nunito,cursive}
@@ -53,3 +53,5 @@ body[data-page=terms] .item{padding:8px 12px}.term-name{height:68px;margin-botto
 .stage-timing{grid-template-columns:calc(100% / 2.45 - 5.333333px) calc(100% * .45 / 2.45 - 5.333333px) calc(100% / 2.45 - 5.333333px)}
 .stage-numeric{grid-template-columns:calc(100% * 1.05 / 2.05 - 4px) calc(100% / 2.05 - 4px)}
 .bean-options .item{padding:10px 18px}
+
+.filters .popover>button{height:40px;white-space:nowrap;overflow:hidden}
