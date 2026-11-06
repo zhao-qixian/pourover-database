@@ -19,8 +19,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/configure-pages@v5
+      - name: Prepare lightweight Pages package
+        run: |
+          python - <<'PY'
+          import hashlib, json, os, shutil
+          from pathlib import Path
+          shutil.copytree('site', '_pages', ignore=shutil.ignore_patterns('media'))
+          p = Path('_pages/publication.json')
+          manifest = json.loads(p.read_text())
+          manifest['media_base'] = 'https://raw.githubusercontent.com/' + os.environ['GITHUB_REPOSITORY'] + '/' + os.environ['GITHUB_SHA'] + '/site/'
+          manifest['remote_media'] = {k: v for k, v in manifest['files'].items() if k.startswith('media/')}
+          manifest['files'] = {k: v for k, v in manifest['files'].items() if not k.startswith('media/')}
+          p.write_text(json.dumps(manifest, ensure_ascii=False), encoding='utf-8')
+          PY
       - uses: actions/upload-pages-artifact@v4
         with:
-          path: site
+          path: _pages
       - uses: actions/deploy-pages@v4
         id: deployment
