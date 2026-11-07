@@ -17,6 +17,8 @@ h2,h3{letter-spacing:-.005em}
 .value{border:0;margin:0 1px}.field .value{white-space:pre;overflow-x:auto;scrollbar-width:none}
 .text-field{height:190px}.text-field label,.score label{height:28px;margin:0;display:flex;align-items:flex-start}
 .text-value{height:162px;padding:12px;border:1px solid transparent;line-height:19.6px}
+.review-field{height:var(--review-height,345px)}
+.review-field .text-value{height:calc(100% - 28px)}
 .text-fields+hr{margin:43.2px 0 27.2px}.score{height:68px}
 .stage-grid{grid-template-rows:40px 40px}
 .bean-brews-heading{margin-bottom:-4.8px}.brew-card p{font-size:14px;line-height:22.4px}.brew-card strong{font-weight:600}

@@ -13,6 +13,23 @@ const label=k=>db.presentation?.labels[k]||labels[k]||db.labels[k]||db.stage_lab
 const gallerySelections=new Map();
 const selections={brews:0,beans:0,terms:0};
 let imageSource;
+let reviewFrame=0;
+const reviewResize=new ResizeObserver(scheduleReviewLayout);
+function scheduleReviewLayout(){
+ if(!reviewFrame)reviewFrame=requestAnimationFrame(alignReviewLayout);
+}
+function alignReviewLayout(){
+ reviewFrame=0;
+ const field=$('.review-field'),list=$('#list .items'),rating=$('.rating-row');
+ if(page!=='brews'||tab!==2||!field||!list||!rating)return;
+ const box=field.getBoundingClientRect(),left=list.getBoundingClientRect();
+ const sideBySide=innerWidth>1200&&box.left>=left.right;
+ const height=sideBySide?Math.max(190,box.height+left.bottom-rating.getBoundingClientRect().bottom):320;
+ const previous=parseFloat(field.style.getPropertyValue('--review-height'));
+ if(!Number.isFinite(previous)||Math.abs(previous-height)>.5)field.style.setProperty('--review-height',height+'px');
+}
+window.addEventListener('resize',scheduleReviewLayout);
+document.fonts?.ready.then(scheduleReviewLayout);
 function formatted(f,key,group,display={}){
  const v=val(f);
  if(['auxiliary','personal_flavors','flavors','varieties'].includes(key))return str(v);
@@ -133,7 +150,7 @@ function renderDetail(r){
    html+='<div class="detail-layout"><div class="detail-body"><p class="caption">B'+String(r.coffee_id).padStart(6,'0')+' · '+esc(val(c.country)||'—')+' · '+esc(val(c.process_category)||'—')+'</p>'+(r.coffee_deleted?'<p class="caption">豆子已归档，保留当时资料</p>':'<a class="button" href="#/beans/'+r.coffee_id+'">查看这包豆</a>')+tabs(['冲煮参数','注水阶段','风味与复盘'])+panel();
    if(tab===0)html+=(db.presentation?.brew_sections||[]).map(([name,rows])=>section(name,b,rows.flatMap(row=>row.length===1?[row[0],null]:row),display)).join('');
    if(tab===1)html+=fields(b,['temperature_c','duration_seconds'],display)+textField(label('recipe'),val(b.recipe),'recipe')+'<hr class="stages-divider">'+stages(val(b.stages));
-   if(tab===2)html+='<div class="text-fields">'+textField(label('review'),val(b.review))+textField(label('personal_flavors'),str(val(b.personal_flavors)))+'</div><hr><div class="rating-row"><div class="score"><label>评分</label><span class="value '+(r.score==null?'missing':'')+'">'+(r.score==null?'未评分':r.score.toFixed(1))+'</span></div>'+ratingGuide()+'</div>';
+   if(tab===2)html+='<div class="text-fields">'+textField(label('review'),val(b.review),'review-field')+textField(label('personal_flavors'),str(val(b.personal_flavors)))+'</div><hr><div class="rating-row"><div class="score"><label>评分</label><span class="value '+(r.score==null?'missing':'')+'">'+(r.score==null?'未评分':r.score.toFixed(1))+'</span></div>'+ratingGuide()+'</div>';
    html+='</div></div><div class="evidence">'+gallery(r.images,'evidence',r.image_labels)+'</div></div><details class="narrow-photo"><summary>视频截图</summary><div class="details-body">'+gallery(r.images,'evidence',r.image_labels)+'</div></details>';
   }
  }
@@ -152,6 +169,9 @@ function renderDetail(r){
  }
  if(page==='terms')html='<h2>'+esc(r.name)+'</h2><p class="caption">统一标准名称与同义写法；原始字幕和历史资料保留。</p><div class="term-name"><label>标准名称</label><span class="value">'+esc(r.name)+'</span></div><p class="alias-label"><strong>已有别名</strong></p><p>'+esc(r.aliases||'暂无别名')+'</p>';
  $('#detail').innerHTML=html;
+ reviewResize.disconnect();
+ [$('#detail'),$('#list .items'),$('.rating-row')].filter(Boolean).forEach(node=>reviewResize.observe(node));
+ scheduleReviewLayout();
  document.querySelectorAll('.bean-photo img').forEach(img=>{const scale=()=>img.closest('.bean-photo').style.setProperty('--image-scale',Math.min(1,(img.naturalWidth||Number(img.getAttribute('width')))/(img.naturalHeight||Number(img.getAttribute('height'))))||1);img.addEventListener('load',scale);scale()});
 }
 function route(){
