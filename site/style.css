@@ -58,3 +58,11 @@ body[data-page=terms] .item{padding:8px 12px}.term-name{height:68px;margin-botto
 
 
 .search-controls{display:grid;grid-template-columns:minmax(0,1fr) 32px;gap:4px;min-width:0}.search-controls button{width:32px;padding:0;border:0;background:transparent;box-shadow:none}.search-controls input{min-width:0}#reset-filters{white-space:nowrap;padding:4px 8px}
+
+/* Match the editor's rating guidance and brewing-record typography. */
+.rating-row{display:grid;grid-template-columns:calc(25% - 32px) minmax(0,1fr);gap:64px;align-items:start}
+.score{height:auto;min-width:0}.score label{height:auto;margin:0 0 4px;font:400 24px/1.6 var(--heading)}
+.rating-guide{min-width:0;padding-top:6px}.rating-guide h4{font:400 14px/1.2 var(--body);margin:0;padding:8px 0 16px}.rating-guide h4:after{display:none}
+.rating-guide ul{padding:0;margin:0 0 16px}.rating-guide li{padding:0 0 0 4.8px;margin:3.2px 0 3.2px 18.4px;font:400 16px/1.6 var(--body)}
+.brew-card p{font-size:16px;line-height:25.6px;font-weight:400}.brew-card strong{font-weight:700}
+@media(max-width:640px){.rating-row{grid-template-columns:minmax(0,1fr);gap:16px}}

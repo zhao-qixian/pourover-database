@@ -107,6 +107,17 @@ function beanFields(c,display={}){
  const varieties=names.length?names.map(n=>translations[n]||n).join('、'):mapping.map(v=>v.english||v.original).join('、');
  return '<div class="fields">'+['roaster','product_name','country','region','farm','flavors'].map(k=>field(label(k),formatted(c[k],k,c,display),k)).join('')+field('品种',varieties,'varieties')+'<div class="field" data-field="process"><span class="label">处理法</span><div class="process-values"><span class="value" title="'+esc(str(val(c.process_category)))+'">'+esc(str(val(c.process_category)))+'</span><span class="value" title="'+esc(str(val(c.process_detail)))+'">'+esc(str(val(c.process_detail)))+'</span></div></div>'+['roast_date','price_per_g'].map(k=>field(label(k),formatted(c[k],k,c,display),k)).join('')+'</div>';
 }
+function ratingGuide(){
+ const lines=[
+  '0 - 0.9 完全不能喝，直接倒掉',
+  '1 - 1.9 明显过萃了，没什么正面风味，但还能喝进去',
+  '2 - 2.9 没有明显的过萃，有一部分不愉悦，但也可能有亮点，风味能展现一部分',
+  '3 - 3.9 没有负面味道，好喝的一杯咖啡，风味、平衡度、口感都可以，但是不算特别',
+  '4 - 4.5 豆子各方面都展现的很好，感官愉悦，让人能够不由自主地“哇”出来',
+  '4.6 - 5 惊为天人，一生中少有的几次完美咖啡体验'
+ ];
+ return '<section class="rating-guide" aria-labelledby="rating-guide-title"><h4 id="rating-guide-title">评分标准：</h4><ul>'+lines.map(text=>'<li>'+esc(text)+'</li>').join('')+'</ul></section>';
+}
 function renderDetail(r){
  if(!r){$('#detail').innerHTML='<p class="empty">没有匹配记录，请调整筛选条件。</p>';return}
  let html='';
@@ -118,7 +129,7 @@ function renderDetail(r){
    html+='<div class="detail-layout"><div class="detail-body"><p class="caption">B'+String(r.coffee_id).padStart(6,'0')+' · '+esc(val(c.country)||'—')+' · '+esc(val(c.process_category)||'—')+'</p>'+(r.coffee_deleted?'<p class="caption">豆子已归档，保留当时资料</p>':'<a class="button" href="#/beans/'+r.coffee_id+'">查看这包豆</a>')+tabs(['冲煮参数','注水阶段','风味与复盘'])+panel();
    if(tab===0)html+=(db.presentation?.brew_sections||[]).map(([name,rows])=>section(name,b,rows.flatMap(row=>row.length===1?[row[0],null]:row),display)).join('');
    if(tab===1)html+=fields(b,['temperature_c','duration_seconds'],display)+textField(label('recipe'),val(b.recipe),'recipe')+'<hr class="stages-divider">'+stages(val(b.stages));
-   if(tab===2)html+='<div class="text-fields">'+textField(label('review'),val(b.review))+textField(label('personal_flavors'),str(val(b.personal_flavors)))+'</div><hr><div class="score"><label>评分</label><span class="value '+(r.score==null?'missing':'')+'">'+(r.score==null?'未评分':r.score.toFixed(1))+'</span></div>';
+   if(tab===2)html+='<div class="text-fields">'+textField(label('review'),val(b.review))+textField(label('personal_flavors'),str(val(b.personal_flavors)))+'</div><hr><div class="rating-row"><div class="score"><label>评分</label><span class="value '+(r.score==null?'missing':'')+'">'+(r.score==null?'未评分':r.score.toFixed(1))+'</span></div>'+ratingGuide()+'</div>';
    html+='</div></div><div class="evidence">'+gallery(r.images,'evidence',r.image_labels)+'</div></div><details class="narrow-photo"><summary>视频截图</summary><div class="details-body">'+gallery(r.images,'evidence',r.image_labels)+'</div></details>';
   }
  }
