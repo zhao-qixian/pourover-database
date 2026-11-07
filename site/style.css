@@ -66,3 +66,11 @@ body[data-page=terms] .item{padding:8px 12px}.term-name{height:68px;margin-botto
 .rating-guide ul{padding:0;margin:0 0 16px}.rating-guide li{padding:0 0 0 4.8px;margin:3.2px 0 3.2px 18.4px;font:400 16px/1.6 var(--body)}
 .brew-card p{font-size:16px;line-height:25.6px;font-weight:400}.brew-card strong{font-weight:700}
 @media(max-width:640px){.rating-row{grid-template-columns:minmax(0,1fr);gap:16px}}
+
+/* Keep brewing parameters in paired columns on phones. */
+@media(max-width:640px){
+ body[data-page=brews] #detail .fields{grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+ body[data-page=brews] #detail .field{grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto;gap:4px;margin-bottom:0}
+ body[data-page=brews] #detail .field-empty{display:block;visibility:hidden}
+ body[data-page=brews] #detail .field .value{white-space:pre-wrap;overflow:visible;overflow-wrap:anywhere}
+}
