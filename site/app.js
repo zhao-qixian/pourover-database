@@ -56,7 +56,10 @@ function sortBox(){
  if(page==='brews')attrs.unshift(['brew_date','冲煮日期']);
  return '<div class="sort">'+select('sort','排序依据',attrs.map(([id,name])=>[id,'按'+name+'排序']),false)+select('desc','排序方向',[['1','降序'],['','升序']],false)+'</div>';
 }
-function search(){return '<input data-filter="q" aria-label="搜索" placeholder="'+(page==='beans'?'豆库：编号、豆名、产地…':page==='terms'?'搜索标准名或别名…':'搜索冲煮记录…')+'" value="'+esc(state[page].q)+'">'}
+function search(){
+ const input='<input data-filter="q" aria-label="搜索" placeholder="'+(page==='beans'?'豆库：编号、豆名、产地…':page==='terms'?'搜索标准名或别名…':'搜索冲煮记录…')+'" value="'+esc(state[page].q)+'">';
+ return page==='terms'?input:'<div class="search-controls">'+input+'<button type="button" id="clear-search" aria-label="清空搜索" title="清空搜索">×</button></div>';
+}
 function listText(r,kind=page){return '<p>'+esc(kind==='terms'?r.name:title(r))+'</p>'+(kind==='terms'?'':'<p>'+esc(kind==='beans'?(val(r.coffee.roast_date)||'烘焙日期待补')+' · '+number(r):val(brew(r).brew_date)||r.month)+'</p>')}
 function beanOptions(q=''){
  $('#bean-options').innerHTML='<button class="item '+(!state.brews.bean?'active':'')+'" data-bean="">全部咖啡豆</button>'+db.beans.filter(b=>beanName(b).toLocaleLowerCase().includes(q.toLocaleLowerCase())).map(b=>'<button class="item '+(String(b.id)===state.brews.bean?'active':'')+'" data-bean="'+b.id+'">'+listText(b,'beans')+'</button>').join('');
@@ -71,6 +74,7 @@ function renderFilters(){
   html=search()+select('month','全部月份',[...new Set(db.brews.map(r=>r.month))].sort().reverse())+beanPicker();
   for(const k of ['roaster','country','process_category'])html+=select(k,'全部'+({roaster:'烘焙商',country:'国家',process_category:'处理法'}[k]),[...new Set(db.brews.map(r=>val(coffee(r)[k])).filter(Boolean))].sort());
  }
+ if(page==='brews')html+='<button type="button" id="reset-filters">重置筛选</button>';
  $('#filters').innerHTML=html?'<div class="filters">'+html+'</div>':page==='terms'?'<p class="caption">词条库</p>':'';
  $('#list-controls').innerHTML=page==='terms'?'<div class="term-category"><label>词条类别</label>'+select('kind','全部类别',[...new Set(db.terms.map(t=>t.kind))].sort().map(k=>[k,label(k)]))+'</div>'+search():(page==='beans'?'<div class="search-row"><label>搜索</label>'+search()+'</div>':'')+sortBox();
  if(page==='brews')beanOptions();
@@ -162,6 +166,8 @@ function sidebar(open){document.body.classList.toggle('sidebar-closed',!open);do
   if(e.target.matches('[data-gallery]')){const root=e.target.closest('.gallery');gallerySelections.set(root.dataset.galleryKey,e.target.selectedIndex);document.querySelectorAll('.gallery').forEach(g=>{if(g.dataset.galleryKey===root.dataset.galleryKey){const img=g.querySelector('img'),size=db.media_dimensions?.[e.target.value.replace(manifest.media_base||'./','')];if(size){img.width=size.width;img.height=size.height}img.src=e.target.value;const select=g.querySelector('select');if(select)select.selectedIndex=e.target.selectedIndex}})}
  });
  document.addEventListener('click',e=>{
+  if(e.target.closest('#clear-search')){state[page].q='';const input=$('input[data-filter="q"]');input.value='';renderList();input.focus();}
+  if(e.target.closest('#reset-filters')){for(const k of ['q','month','bean','roaster','country','process_category'])state.brews[k]='';renderFilters();renderList();$('#reset-filters').focus();}
   const t=e.target.closest('[data-tab]');if(t)activateTab(Number(t.dataset.tab),true);
   const img=e.target.closest('.hero-image');if(img)showImage(img);
   if(e.target.closest('#lightbox')){closeImage();return}
