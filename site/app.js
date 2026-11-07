@@ -24,9 +24,15 @@ function alignReviewLayout(){
  if(page!=='brews'||tab!==2||!field||!list||!rating)return;
  const box=field.getBoundingClientRect(),left=list.getBoundingClientRect();
  const sideBySide=innerWidth>1200&&box.left>=left.right;
- const height=sideBySide?Math.max(190,box.height+left.bottom-rating.getBoundingClientRect().bottom):320;
+ // Use document coordinates so scrolling cannot change the review's height.
+ // Public pages have no save toolbar: keep the complete guide inside the viewport.
+ const bottom=Math.min(left.bottom+scrollY-64,innerHeight-24);
+ const height=sideBySide?Math.max(100,Math.min(480,box.height+bottom-rating.getBoundingClientRect().bottom-scrollY)):320;
  const previous=parseFloat(field.style.getPropertyValue('--review-height'));
- if(!Number.isFinite(previous)||Math.abs(previous-height)>.5)field.style.setProperty('--review-height',height+'px');
+ if(!Number.isFinite(previous)||Math.abs(previous-height)>.5){
+  field.style.setProperty('--review-height',height+'px');
+  field.parentElement.style.setProperty('--review-height',height+'px');
+ }
 }
 window.addEventListener('resize',scheduleReviewLayout);
 document.fonts?.ready.then(scheduleReviewLayout);
