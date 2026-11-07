@@ -1,6 +1,6 @@
 'use strict';
 let db, manifest, page='brews', selected=0, tab=0;
-const state={brews:{q:'',month:'',bean:'',roaster:'',country:'',process_category:'',status:'',sort:'brew_date',desc:'1'},beans:{q:'',sort:'roast_date',desc:'1'},terms:{q:'',kind:''}};
+const state={brews:{q:'',month:'',bean:'',roaster:'',country:'',process_category:'',sort:'brew_date',desc:'1'},beans:{q:'',sort:'roast_date',desc:'1'},terms:{q:'',kind:''}};
 const $=s=>document.querySelector(s);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const val=f=>f?.value, coffee=r=>r.coffee||r.result?.coffee||{}, brew=r=>r.result?.brew||{};
@@ -43,7 +43,7 @@ function gallery(paths,kind='evidence',names=[]){
  const key=page+'/'+selected+'/'+kind,index=Math.min(gallerySelections.get(key)||0,Math.max(0,images.length-1)),size=db.media_dimensions?.[paths[index]];
  const options=images.length>1?'<select data-gallery aria-label="'+(kind==='bean'?'包装/豆卡':'视频截图')+'">'+images.map((p,i)=>'<option value="'+esc(p)+'" '+(i===index?'selected':'')+'>'+esc(names[i]||(kind==='bean'?'包装/豆卡 ':'视频截图 ')+(i+1))+'</option>').join('')+'</select>':'';
  const photo=images.length?'<img class="hero-image" src="'+esc(images[index])+'" '+(size?'width="'+size.width+'" height="'+size.height+'"':'')+' alt="'+(kind==='bean'?'包装/豆卡':'视频截图')+'" tabindex="0" role="button" aria-label="放大'+(kind==='bean'?'包装/豆卡':'视频截图')+'" loading="lazy">':'<div class="photo-placeholder">'+(kind==='bean'?'包装/豆卡':'暂无截图')+'</div>';
- return '<div class="gallery" data-gallery-key="'+key+'">'+(kind==='evidence'?options:'')+photo+(kind==='bean'?'<details><summary>包装/豆卡'+(options?' · 切换':'')+'</summary><div class="details-body">'+(options||'<span class="muted">点击图片可放大查看</span>')+'</div></details>':'')+'</div>';
+ return '<div class="gallery" data-gallery-key="'+key+'">'+options+photo+'</div>';
 }
 function jsonDetails(name,data){return data&&(!Array.isArray(data)||data.length)?'<details><summary>'+esc(name)+'</summary><div class="details-body"><pre>'+esc(JSON.stringify(data,null,2))+'</pre></div></details>':''}
 function tabs(names){return '<div class="tabs" role="tablist">'+names.map((n,i)=>'<button role="tab" id="tab-'+i+'" aria-controls="tab-content" data-tab="'+i+'" tabindex="'+(i===tab?0:-1)+'" aria-selected="'+(i===tab)+'">'+n+'</button>').join('')+'</div>'}
@@ -70,7 +70,6 @@ function renderFilters(){
  if(page==='brews'){
   html=search()+select('month','全部月份',[...new Set(db.brews.map(r=>r.month))].sort().reverse())+beanPicker();
   for(const k of ['roaster','country','process_category'])html+=select(k,'全部'+({roaster:'烘焙商',country:'国家',process_category:'处理法'}[k]),[...new Set(db.brews.map(r=>val(coffee(r)[k])).filter(Boolean))].sort());
-  html+=select('status','全部识别状态',[['success','识别成功'],['other','识别失败 / 待处理']]);
  }
  $('#filters').innerHTML=html?'<div class="filters">'+html+'</div>':page==='terms'?'<p class="caption">词条库</p>':'';
  $('#list-controls').innerHTML=page==='terms'?'<div class="term-category"><label>词条类别</label>'+select('kind','全部类别',[...new Set(db.terms.map(t=>t.kind))].sort().map(k=>[k,label(k)]))+'</div>'+search():(page==='beans'?'<div class="search-row"><label>搜索</label>'+search()+'</div>':'')+sortBox();
@@ -83,7 +82,6 @@ function filtered(){
   if(page==='terms')return !s.kind||r.kind===s.kind;
   if(page==='brews'){
    if(s.month&&r.month!==s.month)return false;
-   if(s.status&&(s.status==='success'?r.status!=='success':r.status==='success'))return false;
    if(s.bean&&String(r.coffee_id)!==s.bean)return false;
    for(const k of ['roaster','country','process_category'])if(s[k]&&val(coffee(r)[k])!==s[k])return false;
   }return true;
@@ -117,7 +115,7 @@ function renderDetail(r){
    if(tab===0)html+=(db.presentation?.brew_sections||[]).map(([name,rows])=>section(name,b,rows.flatMap(row=>row.length===1?[row[0],null]:row),display)).join('');
    if(tab===1)html+=fields(b,['temperature_c','duration_seconds'],display)+textField(label('recipe'),val(b.recipe),'recipe')+'<hr class="stages-divider">'+stages(val(b.stages));
    if(tab===2)html+='<div class="text-fields">'+textField(label('review'),val(b.review))+textField(label('personal_flavors'),str(val(b.personal_flavors)))+'</div><hr><div class="score"><label>评分</label><span class="value '+(r.score==null?'missing':'')+'">'+(r.score==null?'未评分':r.score.toFixed(1))+'</span></div>';
-   html+='</div></div><div class="evidence">'+gallery(r.images,'evidence',r.image_labels)+'</div></div><details class="narrow-photo"><summary>视频截图</summary><div class="details-body">'+gallery(r.images,'evidence',r.image_labels)+'</div></details><div class="supplementary">'+jsonDetails('识别提示',r.result.warnings)+jsonDetails('全部字幕',r.result.raw_text)+jsonDetails('全部字段与来源',r.result)+jsonDetails('人工修改历史',r.history)+jsonDetails('豆子关联历史',r.links)+'</div>';
+   html+='</div></div><div class="evidence">'+gallery(r.images,'evidence',r.image_labels)+'</div></div><details class="narrow-photo"><summary>视频截图</summary><div class="details-body">'+gallery(r.images,'evidence',r.image_labels)+'</div></details>';
   }
  }
  if(page==='beans'){
@@ -129,7 +127,7 @@ function renderDetail(r){
    html+=linked.length?linked.map(x=>'<a class="brew-card '+(x.score!=null&&x.score===best?'best':'')+'" href="#/brews/'+x.id+'"><div class="brew-card-text"><p><strong>'+esc(val(brew(x).brew_date)||'日期未填写')+' · '+(x.score==null?'未评分':x.score.toFixed(1)+' / 5')+(x.score!=null&&x.score===best?' · 最高分':'')+'</strong></p><p>'+esc(val(brew(x).review)||'暂无个人复盘')+'</p></div></a>').join(''):'<p class="caption">这包豆还没有冲煮记录。</p>';
    const recipe=r.recipe||{};
    const filled=['dripper','grind','ratio','other'].some(k=>recipe[k])||recipe.stages?.length;
-   html+='<details class="official-recipe" '+(filled?'open':'')+'><summary>官方推荐方案</summary><div class="details-body"><div class="recipe-fields">'+(db.presentation?.recipe_fields||[]).map(([k,name])=>'<div class="stack-field"><label>'+esc(name)+'</label><span class="value">'+esc(str(recipe[k]))+'</span></div>').join('')+'</div>'+(recipe.stages?.length?stages(recipe.stages):'')+textField('其他',str(recipe.other),'recipe-other')+'</div></details><details class="narrow-photo"><summary>包装/豆卡</summary><div class="details-body">'+gallery(r.photos,'bean')+'</div></details>';
+   html+='<details class="official-recipe" '+(filled?'open':'')+'><summary>官方推荐方案</summary><div class="details-body"><div class="recipe-fields">'+(db.presentation?.recipe_fields||[]).map(([k,name])=>'<div class="stack-field"><label>'+esc(name)+'</label><span class="value">'+esc(str(recipe[k]))+'</span></div>').join('')+'</div>'+(recipe.stages?.length?stages(recipe.stages):'')+textField('其他',str(recipe.other),'recipe-other')+'</div></details><div class="narrow-photo">'+gallery(r.photos,'bean')+'</div>';
   }else html+=(r.sources||[]).map(s=>'<section class="source-entry"><p class="caption">'+esc(s.created_at)+' · UTC</p><div class="source-text">'+esc(s.raw_text)+'</div></section>').join('')+jsonDetails('豆子修改历史',r.history)+jsonDetails('图片与推荐方案历史',r.metadata_history)+jsonDetails('全部字段与来源',c)+jsonDetails('包装原文与来源 · 完整资料',r.sources);
   html+='</div>';
  }
@@ -194,5 +192,5 @@ $('#lightbox').addEventListener('cancel',e=>{e.preventDefault();closeImage()});
  db=JSON.parse(new TextDecoder().decode(bytes));if(db.schema!==1)throw Error('不支持的数据版本');
  state.terms.kind=[...new Set(db.terms.map(t=>t.kind))].sort()[0]||'';
  $('#updated').textContent='更新于 '+new Date(manifest.published_at).toLocaleString('zh-CN',{timeZone:'Asia/Shanghai'})+'（北京时间）';
- $('#download').href='./'+manifest.snapshot;$('#download').download='pourover-database.json';route();
+ route();
 }catch(error){$('#detail').textContent=error.message;$('#detail').classList.add('error')}})();
