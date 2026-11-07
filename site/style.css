@@ -74,3 +74,13 @@ body[data-page=terms] .item{padding:8px 12px}.term-name{height:68px;margin-botto
  body[data-page=brews] #detail .field-empty{display:block;visibility:hidden}
  body[data-page=brews] #detail .field .value{white-space:pre-wrap;overflow:visible;overflow-wrap:anywhere}
 }
+
+/* Shared editor list summaries: title/score, then parameters/date. */
+.list-entry{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 10px;align-items:center;width:100%;min-width:0}
+.item .list-entry p{margin:0;min-width:0;overflow-wrap:anywhere;text-align:left;font-weight:400}
+.item .list-entry .entry-title{font-size:14.08px;line-height:1.45}
+.item .list-entry .entry-summary,.item .list-entry .entry-score,.item .list-entry .entry-date{font-size:12.8px;line-height:1.45}
+.item .list-entry .entry-score,.item .list-entry .entry-date{text-align:right;white-space:nowrap}
+.bean-entry .entry-title{grid-column:1 / -1}.bean-entry .entry-summary{white-space:nowrap}
+.roast-values{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:16px;min-width:0}
+@media(max-width:640px){.field:has(.roast-values){grid-template-rows:auto auto}}

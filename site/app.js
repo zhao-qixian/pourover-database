@@ -60,7 +60,11 @@ function search(){
  const input='<input data-filter="q" aria-label="搜索" placeholder="'+(page==='beans'?'豆库：编号、豆名、产地…':page==='terms'?'搜索标准名或别名…':'搜索冲煮记录…')+'" value="'+esc(state[page].q)+'">';
  return page==='terms'?input:'<div class="search-controls">'+input+'<button type="button" id="clear-search" aria-label="清空搜索" title="清空搜索">×</button></div>';
 }
-function listText(r,kind=page){return '<p>'+esc(kind==='terms'?r.name:title(r))+'</p>'+(kind==='terms'?'':'<p>'+esc(kind==='beans'?(val(r.coffee.roast_date)||'烘焙日期待补')+' · '+number(r):val(brew(r).brew_date)||r.month)+'</p>')}
+function listText(r,kind=page){
+ if(kind==='terms')return '<p>'+esc(r.name)+'</p>';
+ if(kind==='beans')return '<div class="list-entry bean-entry"><p class="entry-title">'+esc(title(r))+'</p><p class="entry-summary">'+esc(val(r.coffee.roast_level)||'待核对')+'</p><p class="entry-date">'+esc((val(r.coffee.roast_date)||'烘焙日期待补')+' · '+number(r))+'</p></div>';
+ return '<div class="list-entry brew-entry"><p class="entry-title">'+esc(title(r))+'</p><p class="entry-score">'+(r.score==null?'':esc(r.score.toFixed(1)))+'</p><p class="entry-summary">'+esc(r.summary||'')+'</p><p class="entry-date">'+esc(val(brew(r).brew_date)||r.month)+'</p></div>';
+}
 function beanOptions(q=''){
  $('#bean-options').innerHTML='<button class="item '+(!state.brews.bean?'active':'')+'" data-bean="">全部咖啡豆</button>'+db.beans.filter(b=>beanName(b).toLocaleLowerCase().includes(q.toLocaleLowerCase())).map(b=>'<button class="item '+(String(b.id)===state.brews.bean?'active':'')+'" data-bean="'+b.id+'">'+listText(b,'beans')+'</button>').join('');
 }
@@ -105,7 +109,7 @@ function renderList(){
 function beanFields(c,display={}){
  const names=val(c.varieties)||[],mapping=val(c.varieties_english)||[],translations=Object.fromEntries(mapping.filter(v=>v.english).map(v=>[v.original,v.english]));
  const varieties=names.length?names.map(n=>translations[n]||n).join('、'):mapping.map(v=>v.english||v.original).join('、');
- return '<div class="fields">'+['roaster','product_name','country','region','farm','flavors'].map(k=>field(label(k),formatted(c[k],k,c,display),k)).join('')+field('品种',varieties,'varieties')+'<div class="field" data-field="process"><span class="label">处理法</span><div class="process-values"><span class="value" title="'+esc(str(val(c.process_category)))+'">'+esc(str(val(c.process_category)))+'</span><span class="value" title="'+esc(str(val(c.process_detail)))+'">'+esc(str(val(c.process_detail)))+'</span></div></div>'+['roast_date','price_per_g'].map(k=>field(label(k),formatted(c[k],k,c,display),k)).join('')+'</div>';
+ return '<div class="fields">'+['roaster','product_name','country','region','farm','flavors'].map(k=>field(label(k),formatted(c[k],k,c,display),k)).join('')+field('品种',varieties,'varieties')+'<div class="field" data-field="process"><span class="label">处理法</span><div class="process-values"><span class="value" title="'+esc(str(val(c.process_category)))+'">'+esc(str(val(c.process_category)))+'</span><span class="value" title="'+esc(str(val(c.process_detail)))+'">'+esc(str(val(c.process_detail)))+'</span></div></div>'+'<div class="field" data-field="roast"><span class="label">烘焙</span><div class="roast-values"><span class="value" data-field="roast_date" title="'+esc(str(val(c.roast_date)))+'">'+esc(str(val(c.roast_date)))+'</span><span class="value" data-field="roast_level">'+esc(val(c.roast_level)||'待核对')+'</span></div></div>'+field(label('price_per_g'),formatted(c.price_per_g,'price_per_g',c,display),'price_per_g')+'</div>';
 }
 function ratingGuide(){
  const lines=[
