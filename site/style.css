@@ -84,3 +84,8 @@ body[data-page=terms] .item{padding:8px 12px}.term-name{height:68px;margin-botto
 .bean-entry .entry-title{grid-column:1 / -1}.bean-entry .entry-summary{white-space:nowrap}
 .roast-values{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:16px;min-width:0}
 @media(max-width:640px){.field:has(.roast-values){grid-template-rows:auto auto}}
+
+@media(max-width:640px){
+ .filters>.bean-picker{grid-column:2;grid-row:1}
+ .filters>[data-filter="month"]{grid-column:1;grid-row:2}
+}
