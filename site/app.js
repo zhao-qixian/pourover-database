@@ -2,6 +2,14 @@
 let db, manifest, page='brews', selected=0, tab=0;
 const state={brews:{q:'',month:'',bean:'',roaster:'',country:'',process_category:'',sort:'brew_date',desc:'1'},beans:{q:'',sort:'roast_date',desc:'1'},terms:{q:'',kind:''}};
 const $=s=>document.querySelector(s);
+function setTheme(light){
+ document.documentElement.dataset.theme=light?'light':'dark';
+ $('#theme-switch').setAttribute('aria-checked',String(light));
+ $('meta[name="theme-color"]').content=light?'#EFE3D3':'#241919';
+ try{localStorage.setItem('pour-over-theme',light?'light':'dark')}catch{}
+}
+let savedTheme='dark';try{savedTheme=localStorage.getItem('pour-over-theme')||'dark'}catch{}
+setTheme(savedTheme==='light');
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const val=f=>f?.value, coffee=r=>r.coffee||r.result?.coffee||{}, brew=r=>r.result?.brew||{};
 const str=v=>v==null?'':typeof v==='boolean'?(v?'是':'否'):Array.isArray(v)?v.map(x=>typeof x==='object'?Object.values(x).filter(y=>y!=null).join(' · '):x).join('、'):String(v);
@@ -210,6 +218,7 @@ function sidebar(open){document.body.classList.toggle('sidebar-closed',!open);do
   if(e.target.matches('[data-gallery]')){const root=e.target.closest('.gallery');gallerySelections.set(root.dataset.galleryKey,e.target.selectedIndex);document.querySelectorAll('.gallery').forEach(g=>{if(g.dataset.galleryKey===root.dataset.galleryKey){const img=g.querySelector('img'),size=db.media_dimensions?.[e.target.value.replace(manifest.media_base||'./','')];if(size){img.width=size.width;img.height=size.height}img.src=e.target.value;const select=g.querySelector('select');if(select)select.selectedIndex=e.target.selectedIndex}})}
  });
  document.addEventListener('click',e=>{
+  if(e.target.closest('#theme-switch'))setTheme(document.documentElement.dataset.theme!=='light');
   if(e.target.closest('#clear-search')){state[page].q='';const input=$('input[data-filter="q"]');input.value='';renderList();input.focus();}
   if(e.target.closest('#reset-filters')){for(const k of ['q','month','bean','roaster','country','process_category'])state.brews[k]='';renderFilters();renderList();$('#reset-filters').focus();}
   const t=e.target.closest('[data-tab]');if(t)activateTab(Number(t.dataset.tab),true);

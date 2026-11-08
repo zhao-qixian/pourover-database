@@ -155,3 +155,20 @@ body[data-page=brews] .brew-data-sections .parameter-section .fields{grid-templa
 .brew-recipe-section .recipe{height:330px;margin-top:11.2px}
 @media(max-width:900px){.brew-data-sections{grid-template-columns:minmax(0,1fr)}}
 @media(max-width:640px){.brew-title-row{grid-template-columns:minmax(0,1fr) 110px}.brew-data-sections .bare-fields{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* Shared local/public light palette and compact sidebar theme switch. */
+:root[data-theme=light]{color-scheme:light;--bg:#EFE3D3;--panel:#DFCCB5;--text:#382B25;--muted:#705744;--caption:#705744;--accent:#925A42;--line:#C2A990;--border:#C2A990;--selected:#D5BCA3}
+[data-theme=light] .item.active,[data-theme=light] .score .value:not(.missing){color:#FFF6E8}
+[data-theme=light] details[open]>summary,[data-theme=light] summary:hover{background:var(--selected);color:var(--text)}
+[data-theme=light] .tabs{border-bottom-color:var(--line)}
+[data-theme=light] select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23382B25' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")}
+[data-theme=light] .error{color:#8A3028}
+#theme-switch{display:grid;grid-template-columns:24px 24px;grid-template-rows:10px 26px;gap:6px 0;align-content:center;width:48px;min-height:44px;margin:18px 0 0 18px;padding:0;border:0;border-radius:0;background:transparent;color:var(--muted)}
+#theme-switch>span:not(.theme-track){font:600 8px/1 Nunito,sans-serif;letter-spacing:0}
+.theme-dark{grid-area:1/1;justify-self:start}.theme-light{grid-area:1/2;justify-self:end}
+#theme-switch[aria-checked=false] .theme-dark,#theme-switch[aria-checked=true] .theme-light{color:var(--text)}
+.theme-track{grid-area:2/1/3/3;position:relative;width:48px;height:26px;border-radius:999px;background:#F5E6D5;box-shadow:inset 0 0 0 1px #38252420}
+.theme-track>span{position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#382524;box-shadow:inset -5px 1px 0 #F5E6D5;transition:transform .2s ease,background .2s,box-shadow .2s}
+#theme-switch[aria-checked=true] .theme-track>span{transform:translateX(22px);background:var(--accent);box-shadow:0 1px 3px #38252430}
+#theme-switch:focus-visible{outline:none}#theme-switch:focus-visible .theme-track{outline:2px solid var(--accent);outline-offset:4px}
+@media(prefers-reduced-motion:reduce){.theme-track>span{transition:none}}
