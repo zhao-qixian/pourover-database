@@ -143,3 +143,15 @@ body[data-page=terms] .item{padding:8px 12px}.term-name{height:68px;margin-botto
  .stage-grid>:nth-child(8){grid-area:4/1/5/3}
  .stage-grid>:nth-child(4){grid-area:5/1/6/3}
 }
+
+.brew-title-row{display:grid;grid-template-columns:minmax(0,1fr) 150px;align-items:center;gap:16px}
+.brew-title-row h2{min-width:0}.brew-date{text-align:right}
+.brew-data-sections{display:grid;grid-template-columns:calc((100% - 16px)/1.65 + 16px) minmax(0,1fr);gap:24px}
+.brew-data-sections>*,.brew-parameters{min-width:0}
+.brew-data-sections h4{margin-top:17.6px;margin-bottom:12px}
+.brew-data-sections .bare-fields{grid-template-columns:repeat(4,minmax(0,1fr))}
+body[data-page=brews] .brew-data-sections .parameter-section .fields{grid-template-columns:repeat(2,minmax(0,1fr))}
+.brew-recipe-section .fields{grid-template-columns:minmax(0,1fr)!important}
+.brew-recipe-section .recipe{height:330px;margin-top:11.2px}
+@media(max-width:900px){.brew-data-sections{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:640px){.brew-title-row{grid-template-columns:minmax(0,1fr) 110px}.brew-data-sections .bare-fields{grid-template-columns:repeat(2,minmax(0,1fr))}}

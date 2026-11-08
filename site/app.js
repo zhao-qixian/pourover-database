@@ -9,7 +9,7 @@ const number=r=>'B'+String(r.id).padStart(6,'0');
 const title=r=>(val(coffee(r).roaster)||'未知烘焙商')+' · '+(val(coffee(r).product_name)||val(coffee(r).farm)||'未命名咖啡豆');
 const beanName=r=>title(r)+' · '+(val(r.coffee.roast_date)||'烘焙日期待补')+' · '+number(r);
 const labels={bypass_water_g:'Bypass g/1:n',farm:'庄园',duration_seconds:'总时间',process_category:'大类',process_detail:'细节'};
-const label=k=>k==='duration_seconds'?'总时间':db.presentation?.labels[k]||labels[k]||db.labels[k]||db.stage_labels[k]||k;
+const label=k=>k==='water_g'?'注水 g':k==='yield_g'?'出液 g':k==='duration_seconds'?'总时间':db.presentation?.labels[k]||labels[k]||db.labels[k]||db.stage_labels[k]||k;
 const gallerySelections=new Map();
 const selections={brews:0,beans:0,terms:0};
 let imageSource;
@@ -21,7 +21,7 @@ function scheduleReviewLayout(){
 function alignReviewLayout(){
  reviewFrame=0;
  const field=$('.review-field'),list=$('#list .items'),rating=$('.rating-row');
- if(page!=='brews'||tab!==2||!field||!list||!rating)return;
+ if(page!=='brews'||tab!==1||!field||!list||!rating)return;
  const box=field.getBoundingClientRect(),left=list.getBoundingClientRect();
  const sideBySide=innerWidth>1200&&box.left>=left.right;
  // Use document coordinates so scrolling cannot change the review's height.
@@ -151,16 +151,15 @@ function renderDetail(r){
  let html='';
  if(page==='brews'){
   const b=brew(r),c=coffee(r),display=r.display?.brew||{};
-  html='<h2>'+esc(title(r))+'</h2><p class="caption">'+esc(r.filename)+'</p>';
+  html='<div class="brew-title-row"><h2>'+esc(title(r))+'</h2><span class="value brew-date" aria-label="冲煮日期">'+esc(val(b.brew_date)||'')+'</span></div><p class="caption">'+esc(r.filename)+'</p>';
   if(!r.result)html+='<p>尚未完成识别</p>'+gallery(r.images,'evidence',r.image_labels);
   else{
-   html+='<div class="detail-layout"><div class="detail-body"><p class="caption">B'+String(r.coffee_id).padStart(6,'0')+' · '+esc(val(c.country)||'—')+' · '+esc(val(c.process_category)||'—')+'</p>'+(r.coffee_deleted?'<p class="caption">豆子已归档，保留当时资料</p>':'<a class="button" href="#/beans/'+r.coffee_id+'">查看这包豆</a>')+tabs(['冲煮参数','注水阶段','风味与复盘'])+panel();
+   html+='<div class="detail-layout"><div class="detail-body"><p class="caption">B'+String(r.coffee_id).padStart(6,'0')+' · '+esc(val(c.country)||'—')+' · '+esc(val(c.process_category)||'—')+'</p>'+(r.coffee_deleted?'<p class="caption">豆子已归档，保留当时资料</p>':'<a class="button" href="#/beans/'+r.coffee_id+'">查看这包豆</a>')+tabs(['冲煮数据','风味与复盘'])+panel();
    if(tab===0){
     const bare=keys=>'<div class="bare-fields bare-'+keys.length+'">'+keys.map(k=>'<span class="value" aria-label="'+esc(label(k))+'">'+esc(val(b[k])==null&&!(k==='sieve_mesh'&&val(b.sieved)!=null)?'':formatted(b[k],k,b,display))+'</span>').join('')+'</div>';
-    html+=bare(['brew_date'])+bare(['grinder','grind_parts','sieve_mesh'])+bare(['dripper','paper','auxiliary','water'])+section('粉量与比例',b,['dose_g',null,'ratio','water_g','yield_ratio','yield_g','ice_ratio','ice_g','cutoff','bypass_water_g'],display);
+    html+='<div class="brew-data-sections"><div class="brew-parameters"><h4>设备</h4>'+bare(['grinder','grind_parts','sieve_mesh'])+bare(['dripper','paper','auxiliary','water'])+section('粉量与比例',b,['dose_g',null,'ratio','water_g','yield_ratio','yield_g','ice_ratio','ice_g','cutoff','bypass_water_g'],display)+'</div><section class="brew-recipe-section"><h4>冲煮方案</h4>'+fields(b,['temperature_c','duration_seconds'],display)+'<div class="text-value recipe">'+esc(val(b.recipe))+'</div></section></div><hr class="stages-divider">'+stages(val(b.stages),val(b.dose_g));
    }
-   if(tab===1)html+=fields(b,['temperature_c','duration_seconds'],display)+textField(label('recipe'),val(b.recipe),'recipe')+'<hr class="stages-divider">'+stages(val(b.stages),val(b.dose_g));
-   if(tab===2)html+='<div class="text-fields">'+textField(label('review'),val(b.review),'review-field')+textField(label('personal_flavors'),str(val(b.personal_flavors)),'flavor-field')+'</div><hr><div class="rating-row"><div class="score"><label>评分</label><span class="value '+(r.score==null?'missing':'')+'">'+(r.score==null?'未评分':r.score.toFixed(1))+'</span></div>'+ratingGuide()+'</div>';
+   if(tab===1)html+='<div class="text-fields">'+textField(label('review'),val(b.review),'review-field')+textField(label('personal_flavors'),str(val(b.personal_flavors)),'flavor-field')+'</div><hr><div class="rating-row"><div class="score"><label>评分</label><span class="value '+(r.score==null?'missing':'')+'">'+(r.score==null?'未评分':r.score.toFixed(1))+'</span></div>'+ratingGuide()+'</div>';
    html+='</div></div><div class="evidence">'+gallery(r.images,'evidence',r.image_labels)+'</div></div><details class="narrow-photo"><summary>视频截图</summary><div class="details-body">'+gallery(r.images,'evidence',r.image_labels)+'</div></details>';
   }
  }
