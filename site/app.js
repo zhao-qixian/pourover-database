@@ -26,8 +26,8 @@ function alignReviewLayout(){
  const sideBySide=innerWidth>1200&&box.left>=left.right;
  // Use document coordinates so scrolling cannot change the review's height.
  // Public pages have no save toolbar: keep the complete guide inside the viewport.
- const bottom=Math.min(left.bottom+scrollY-64,innerHeight-72);
- const height=sideBySide?Math.max(100,Math.min(480,box.height+bottom-rating.getBoundingClientRect().bottom-scrollY)):272;
+ const bottom=Math.min(left.bottom+scrollY-64,innerHeight-136);
+ const height=sideBySide?Math.max(100,Math.min(480,box.height+bottom-rating.getBoundingClientRect().bottom-scrollY)):224;
  const previous=parseFloat(field.style.getPropertyValue('--review-height'));
  if(!Number.isFinite(previous)||Math.abs(previous-height)>.5){
   field.style.setProperty('--review-height',height+'px');
