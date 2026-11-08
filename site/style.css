@@ -127,3 +127,9 @@ body[data-page=terms] .item{padding:8px 12px}.term-name{height:68px;margin-botto
  .stage-grid>:nth-child(5),.stage-grid>:nth-child(10){display:none}
  .stage-numeric{grid-template-columns:1fr 1fr}.stage-timing{grid-template-columns:1fr 28px 1fr;gap:4px}
 }
+
+/* Align equal compact fields with the dose label and input. */
+.bare-fields{grid-template-columns:repeat(4,calc((100% - 16px)/6.6 - 8px))}
+@media(min-width:1201px){.filters{grid-template-columns:calc(25% - 32px) .8fr 1.25fr 1.1fr .85fr minmax(84px,.8fr)}}
+#list-controls>.bean-picker .popover-panel{width:100%;max-width:100%;min-width:0}
+@media(max-width:640px){.bare-fields{grid-template-columns:repeat(2,minmax(0,1fr))}}
