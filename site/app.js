@@ -44,6 +44,73 @@ function alignReviewLayout(){
 }
 window.addEventListener('resize',scheduleReviewLayout);
 document.fonts?.ready.then(scheduleReviewLayout);
+// Native select popups ignore page fonts on Windows. Keep select values as the
+// data source, and render accessible, consistently themed menus above them.
+let selectSequence=0,openSelect=null;
+function closeSelect(){
+ if(!openSelect)return;
+ openSelect.button.setAttribute('aria-expanded','false');
+ openSelect.button.removeAttribute('aria-activedescendant');
+ openSelect.menu.remove();openSelect=null;
+}
+function enhanceSelects(){
+ document.querySelectorAll('select').forEach(select=>{
+  if(select.dataset.enhanced)return;
+  select.dataset.enhanced='true';select.hidden=true;select.tabIndex=-1;select.setAttribute('aria-hidden','true');
+  const wrapper=document.createElement('div');wrapper.className='select-control';
+  if(select.dataset.filter)wrapper.dataset.filter=select.dataset.filter;
+  select.before(wrapper);wrapper.append(select);
+  const button=document.createElement('button');button.type='button';button.className='select-trigger';
+  button.setAttribute('role','combobox');button.setAttribute('aria-haspopup','listbox');button.setAttribute('aria-expanded','false');
+  const label=select.getAttribute('aria-label')||'选择';button.setAttribute('aria-label',label);
+  const id='select-menu-'+(++selectSequence);button.setAttribute('aria-controls',id);
+  wrapper.append(button);
+  const sync=()=>{button.textContent=select.selectedOptions[0]?.textContent||''};sync();select.addEventListener('change',sync);
+  let active=0,query='',typedAt=0;
+  const choose=index=>{
+   select.selectedIndex=index;sync();closeSelect();button.focus({preventScroll:true});
+   select.dispatchEvent(new Event('change',{bubbles:true}));
+  };
+  const highlight=index=>{
+   if(openSelect?.button!==button)return;
+   const options=[...openSelect.menu.children];active=Math.max(0,Math.min(index,options.length-1));
+   options.forEach((option,i)=>option.classList.toggle('highlighted',i===active));
+   if(options[active]){button.setAttribute('aria-activedescendant',options[active].id);options[active].scrollIntoView({block:'nearest'})}
+  };
+  const open=()=>{
+   closeSelect();closePopovers();
+   const menu=document.createElement('div');menu.id=id;menu.className='select-menu';menu.setAttribute('role','listbox');menu.setAttribute('aria-label',label);
+   [...select.options].forEach((option,i)=>{
+    const row=document.createElement('div');row.id=id+'-'+i;row.className='select-option';row.setAttribute('role','option');row.setAttribute('aria-selected',String(i===select.selectedIndex));row.textContent=option.textContent;
+    row.addEventListener('mousedown',e=>e.preventDefault());row.addEventListener('click',()=>choose(i));row.addEventListener('mousemove',()=>highlight(i));menu.append(row);
+   });
+   document.body.append(menu);openSelect={button,menu};button.setAttribute('aria-expanded','true');
+   const r=button.getBoundingClientRect(),width=Math.min(Math.max(r.width,140),innerWidth-16),below=innerHeight-r.bottom-12,above=r.top-12;
+   const upwards=below<180&&above>below,available=upwards?above:below;
+   menu.style.width=width+'px';menu.style.left=Math.max(8,Math.min(r.left,innerWidth-width-8))+'px';menu.style.maxHeight=Math.max(44,Math.min(352,available))+'px';
+   if(upwards)menu.style.bottom=(innerHeight-r.top+4)+'px';else menu.style.top=(r.bottom+4)+'px';
+   highlight(select.selectedIndex<0?0:select.selectedIndex);
+  };
+  button.addEventListener('click',()=>openSelect?.button===button?closeSelect():open());
+  button.addEventListener('keydown',e=>{
+   const opened=openSelect?.button===button;
+   if(['ArrowDown','ArrowUp','Home','End'].includes(e.key)){
+    e.preventDefault();if(!opened)open();
+    highlight(e.key==='Home'?0:e.key==='End'?select.options.length-1:active+(e.key==='ArrowDown'?1:-1));
+   }else if(['Enter',' '].includes(e.key)){e.preventDefault();if(opened)choose(active);else open()}
+   else if(e.key==='Escape'){e.preventDefault();closeSelect()}
+   else if(e.key==='Tab')closeSelect();
+   else if(e.key.length===1&&!e.ctrlKey&&!e.metaKey&&!e.altKey){
+    e.preventDefault();if(!opened)open();const now=Date.now();query=(now-typedAt<700?query:'')+e.key.toLocaleLowerCase();typedAt=now;
+    const index=[...select.options].findIndex(o=>o.textContent.toLocaleLowerCase().startsWith(query));if(index>=0)highlight(index);
+   }
+  });
+ });
+}
+document.addEventListener('pointerdown',e=>{if(openSelect&&!openSelect.menu.contains(e.target)&&!openSelect.button.contains(e.target))closeSelect()});
+document.addEventListener('scroll',e=>{if(openSelect&&!openSelect.menu.contains(e.target))closeSelect()},true);
+window.addEventListener('resize',closeSelect);
+
 function formatted(f,key,group,display={}){
  const v=val(f);
  if(key==='duration_seconds')return time(v);
@@ -105,6 +172,7 @@ function beanPicker(){
  return '<div class="popover bean-picker"><button data-popover="bean-panel" aria-expanded="false" aria-controls="bean-panel" aria-label="筛选咖啡豆">'+esc(chosen?title(chosen):'全部咖啡豆')+' <span aria-hidden="true">⌄</span></button><div class="popover-panel" id="bean-panel" hidden><input id="bean-query" aria-label="搜索咖啡豆筛选项" placeholder="搜索烘焙商、豆名或编号…"><div class="bean-options" id="bean-options"></div></div></div>';
 }
 function renderFilters(){
+ closeSelect();
  let html='';
  if(page==='brews'){
   html=search()+select('month','全部月份',[...new Set(db.brews.map(r=>r.month))].sort().reverse());
@@ -114,6 +182,7 @@ function renderFilters(){
  $('#filters').innerHTML=html?'<div class="filters">'+html+'</div>':page==='terms'?'<p class="caption">词条库</p>':'';
  $('#list-controls').innerHTML=page==='terms'?'<div class="term-category"><label>词条类别</label>'+select('kind','全部类别',[...new Set(db.terms.map(t=>t.kind))].sort().map(k=>[k,label(k)]))+'</div>'+search():(page==='beans'?'<div class="search-row"><label>搜索</label>'+search()+'</div>':page==='brews'?beanPicker():'')+sortBox();
  if(page==='brews')beanOptions();
+ enhanceSelects();
 }
 function filtered(){
  const s=state[page];let rows=db[page].filter(r=>{
@@ -185,13 +254,16 @@ function renderDetail(r){
   html+='</div>';
  }
  if(page==='terms')html='<h2>'+esc(r.name)+'</h2><p class="caption">统一标准名称与同义写法；原始字幕和历史资料保留。</p><div class="term-name"><label>标准名称</label><span class="value">'+esc(r.name)+'</span></div><p class="alias-label"><strong>已有别名</strong></p><p>'+esc(r.aliases||'暂无别名')+'</p>';
+ if(openSelect&&!openSelect.button.isConnected)closeSelect();
  $('#detail').innerHTML=html;
+ enhanceSelects();
  reviewResize.disconnect();
  [$('#detail'),$('#list .items'),$('.rating-row')].filter(Boolean).forEach(node=>reviewResize.observe(node));
  scheduleReviewLayout();
  document.querySelectorAll('.bean-photo img').forEach(img=>{const scale=()=>img.closest('.bean-photo').style.setProperty('--image-scale',Math.min(1,(img.naturalWidth||Number(img.getAttribute('width')))/(img.naturalHeight||Number(img.getAttribute('height'))))||1);img.addEventListener('load',scale);scale()});
 }
 function route(){
+ closeSelect();
  const previous=page,scroll=$('.items')?.scrollTop||0,m=location.hash.match(/^#\/(brews|beans|terms)(?:\/(\d+))?$/);
  if($('#lightbox').open)closeImage();
  page=m?.[1]||'brews';selected=Number(m?.[2]||selections[page]||0);if(previous!==page)tab=0;
@@ -215,7 +287,7 @@ function sidebar(open){document.body.classList.toggle('sidebar-closed',!open);do
  });
  document.addEventListener('change',e=>{
   if(e.target.matches('select[data-filter]')){state[page][e.target.dataset.filter]=e.target.value;renderList();}
-  if(e.target.matches('[data-gallery]')){const root=e.target.closest('.gallery');gallerySelections.set(root.dataset.galleryKey,e.target.selectedIndex);document.querySelectorAll('.gallery').forEach(g=>{if(g.dataset.galleryKey===root.dataset.galleryKey){const img=g.querySelector('img'),size=db.media_dimensions?.[e.target.value.replace(manifest.media_base||'./','')];if(size){img.width=size.width;img.height=size.height}img.src=e.target.value;const select=g.querySelector('select');if(select)select.selectedIndex=e.target.selectedIndex}})}
+  if(e.target.matches('[data-gallery]')){const root=e.target.closest('.gallery');gallerySelections.set(root.dataset.galleryKey,e.target.selectedIndex);document.querySelectorAll('.gallery').forEach(g=>{if(g.dataset.galleryKey===root.dataset.galleryKey){const img=g.querySelector('img'),size=db.media_dimensions?.[e.target.value.replace(manifest.media_base||'./','')];if(size){img.width=size.width;img.height=size.height}img.src=e.target.value;const select=g.querySelector('select');if(select){select.selectedIndex=e.target.selectedIndex;const trigger=select.parentElement.querySelector('.select-trigger');if(trigger)trigger.textContent=select.selectedOptions[0]?.textContent||''}}})}
  });
  document.addEventListener('click',e=>{
   if(e.target.closest('#theme-switch'))setTheme(document.documentElement.dataset.theme!=='light');
