@@ -8,8 +8,8 @@ const str=v=>v==null?'':typeof v==='boolean'?(v?'是':'否'):Array.isArray(v)?v.
 const number=r=>'B'+String(r.id).padStart(6,'0');
 const title=r=>(val(coffee(r).roaster)||'未知烘焙商')+' · '+(val(coffee(r).product_name)||val(coffee(r).farm)||'未命名咖啡豆');
 const beanName=r=>title(r)+' · '+(val(r.coffee.roast_date)||'烘焙日期待补')+' · '+number(r);
-const labels={bypass_water_g:'Bypass g/1:n',farm:'庄园',process_category:'大类',process_detail:'细节'};
-const label=k=>db.presentation?.labels[k]||labels[k]||db.labels[k]||db.stage_labels[k]||k;
+const labels={bypass_water_g:'Bypass g/1:n',farm:'庄园',duration_seconds:'总时间',process_category:'大类',process_detail:'细节'};
+const label=k=>k==='duration_seconds'?'总时间':db.presentation?.labels[k]||labels[k]||db.labels[k]||db.stage_labels[k]||k;
 const gallerySelections=new Map();
 const selections={brews:0,beans:0,terms:0};
 let imageSource;
@@ -38,12 +38,13 @@ window.addEventListener('resize',scheduleReviewLayout);
 document.fonts?.ready.then(scheduleReviewLayout);
 function formatted(f,key,group,display={}){
  const v=val(f);
+ if(key==='duration_seconds')return time(v);
  if(['auxiliary','personal_flavors','flavors','varieties'].includes(key))return str(v);
  if(display[key]!=null)return display[key]|| (key==='cutoff'?'未填写':'');
  if(key==='grind_parts')return v?.map(x=>x.number+(x.primary?'(主要)':'')).join('+')||str(val(group.grind));
  if(key==='sieve_mesh')return v?.length?v.map(x=>x+'目').join('+'):val(group.sieved)===false?'未筛粉':val(group.sieved)===true?'已筛粉（目数未知）':'';
  if(key==='bypass_water_g')return val(group.bypass_ratio)?(group.bypass_ratio.status==='estimated'?'约':'')+val(group.bypass_ratio):v==null&&val(group.bypass)===true?'有':str(v);
- return str(v)||(key==='cutoff'?'未填写':'');
+ return str(v);
 }
 function field(name,text,key=''){
  return '<div class="field"'+(key?' data-field="'+esc(key)+'"':'')+'><span class="label">'+esc(name)+'</span><span class="value" title="'+esc(text)+'">'+esc(text)+'</span></div>';
@@ -54,11 +55,11 @@ function fields(group,keys,display={}){
 function section(name,g,keys,display){return '<section class="parameter-section"><h4>'+name+'</h4>'+fields(g,keys,display)+'</section>'}
 function textField(name,text,extra=''){return '<div class="text-field '+extra+'"><label>'+esc(name)+'</label><div class="text-value">'+esc(text)+'</div></div>'}
 function time(n){return n==null?'':Math.floor(n/60)+' : '+String(Math.round((n%60)*100)/100).padStart(2,'0')}
-function stages(items){
+function stages(items,dose){
  const numeric=(s,k,name)=>{const v=val(s[k]);return '<div class="stage-numeric"><span>'+name+'</span><span class="value">'+esc(Number.isInteger(v)?v.toFixed(1):str(v))+'</span></div>'};
  return (items||[]).map((s,i)=>{
   const start=val(s.start_seconds),duration=val(s.pour_seconds),end=start!=null&&duration!=null?start+duration:null;
-  return '<section class="stage"><div class="stage-grid"><strong>第'+('一二三四五六七八九十'[i]||i+1)+'段</strong><div class="stage-timing"><span class="value">'+time(start)+'</span><span class="stage-arrow" aria-label="至"><svg viewBox="0 0 32 16" width="28" height="16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8H29M23 2L29 8L23 14"/></svg></span><span class="value">'+time(end)+'</span></div>'+numeric(s,'water_g','注水量 g')+numeric(s,'temperature_c','水温 °C')+'<span></span><span>手法</span><span class="value stage-technique">'+esc(str(val(s.technique)))+'</span>'+numeric(s,'yield_g','出液量 g')+'<span></span><span></span></div></section>';
+  return '<section class="stage"><div class="stage-grid"><strong>第'+('一二三四五六七八九十'[i]||i+1)+'段</strong><div class="stage-timing"><span class="value">'+time(start)+'</span><span class="stage-arrow" aria-label="至"><svg viewBox="0 0 32 16" width="28" height="16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8H29M23 2L29 8L23 14"/></svg></span><span class="value">'+time(end)+'</span></div>'+numeric(s,'water_g','注水量 g')+numeric(s,'temperature_c','水温 °C')+'<span></span><span>手法</span><span class="value stage-technique">'+esc(str(val(s.technique)))+'</span>'+numeric(s,'yield_g','出液量 g')+'<div class="stage-numeric"><span>比例</span><span class="value">'+(dose>0&&(val(s.yield_g)??val(s.water_g))!=null?'1:'+Number(((val(s.yield_g)??val(s.water_g))/dose).toPrecision(3)):'')+'</span></div><span></span></div></section>';
  }).join('')||'<p class="muted">未记录注水阶段</p>';
 }
 function gallery(paths,kind='evidence',names=[]){
@@ -98,12 +99,12 @@ function beanPicker(){
 function renderFilters(){
  let html='';
  if(page==='brews'){
-  html=search()+select('month','全部月份',[...new Set(db.brews.map(r=>r.month))].sort().reverse())+beanPicker();
+  html=search()+select('month','全部月份',[...new Set(db.brews.map(r=>r.month))].sort().reverse());
   for(const k of ['roaster','country','process_category'])html+=select(k,'全部'+({roaster:'烘焙商',country:'国家',process_category:'处理法'}[k]),[...new Set(db.brews.map(r=>val(coffee(r)[k])).filter(Boolean))].sort());
  }
  if(page==='brews')html+='<button type="button" id="reset-filters">重置筛选</button>';
  $('#filters').innerHTML=html?'<div class="filters">'+html+'</div>':page==='terms'?'<p class="caption">词条库</p>':'';
- $('#list-controls').innerHTML=page==='terms'?'<div class="term-category"><label>词条类别</label>'+select('kind','全部类别',[...new Set(db.terms.map(t=>t.kind))].sort().map(k=>[k,label(k)]))+'</div>'+search():(page==='beans'?'<div class="search-row"><label>搜索</label>'+search()+'</div>':'')+sortBox();
+ $('#list-controls').innerHTML=page==='terms'?'<div class="term-category"><label>词条类别</label>'+select('kind','全部类别',[...new Set(db.terms.map(t=>t.kind))].sort().map(k=>[k,label(k)]))+'</div>'+search():(page==='beans'?'<div class="search-row"><label>搜索</label>'+search()+'</div>':page==='brews'?beanPicker():'')+sortBox();
  if(page==='brews')beanOptions();
 }
 function filtered(){
@@ -154,9 +155,12 @@ function renderDetail(r){
   if(!r.result)html+='<p>尚未完成识别</p>'+gallery(r.images,'evidence',r.image_labels);
   else{
    html+='<div class="detail-layout"><div class="detail-body"><p class="caption">B'+String(r.coffee_id).padStart(6,'0')+' · '+esc(val(c.country)||'—')+' · '+esc(val(c.process_category)||'—')+'</p>'+(r.coffee_deleted?'<p class="caption">豆子已归档，保留当时资料</p>':'<a class="button" href="#/beans/'+r.coffee_id+'">查看这包豆</a>')+tabs(['冲煮参数','注水阶段','风味与复盘'])+panel();
-   if(tab===0)html+=(db.presentation?.brew_sections||[]).map(([name,rows])=>section(name,b,rows.flatMap(row=>row.length===1?[row[0],null]:row),display)).join('');
-   if(tab===1)html+=fields(b,['temperature_c','duration_seconds'],display)+textField(label('recipe'),val(b.recipe),'recipe')+'<hr class="stages-divider">'+stages(val(b.stages));
-   if(tab===2)html+='<div class="text-fields">'+textField(label('review'),val(b.review),'review-field')+textField(label('personal_flavors'),str(val(b.personal_flavors)))+'</div><hr><div class="rating-row"><div class="score"><label>评分</label><span class="value '+(r.score==null?'missing':'')+'">'+(r.score==null?'未评分':r.score.toFixed(1))+'</span></div>'+ratingGuide()+'</div>';
+   if(tab===0){
+    const bare=keys=>'<div class="bare-fields bare-'+keys.length+'">'+keys.map(k=>'<span class="value" aria-label="'+esc(label(k))+'">'+esc(val(b[k])==null&&!(k==='sieve_mesh'&&val(b.sieved)!=null)?'':formatted(b[k],k,b,display))+'</span>').join('')+'</div>';
+    html+=bare(['brew_date'])+bare(['grinder','grind_parts','sieve_mesh'])+bare(['dripper','paper','auxiliary','water'])+section('粉量与比例',b,['dose_g',null,'ratio','water_g','yield_ratio','yield_g','ice_ratio','ice_g','cutoff','bypass_water_g'],display);
+   }
+   if(tab===1)html+=fields(b,['temperature_c','duration_seconds'],display)+textField(label('recipe'),val(b.recipe),'recipe')+'<hr class="stages-divider">'+stages(val(b.stages),val(b.dose_g));
+   if(tab===2)html+='<div class="text-fields">'+textField(label('review'),val(b.review),'review-field')+textField(label('personal_flavors'),str(val(b.personal_flavors)),'flavor-field')+'</div><hr><div class="rating-row"><div class="score"><label>评分</label><span class="value '+(r.score==null?'missing':'')+'">'+(r.score==null?'未评分':r.score.toFixed(1))+'</span></div>'+ratingGuide()+'</div>';
    html+='</div></div><div class="evidence">'+gallery(r.images,'evidence',r.image_labels)+'</div></div><details class="narrow-photo"><summary>视频截图</summary><div class="details-body">'+gallery(r.images,'evidence',r.image_labels)+'</div></details>';
   }
  }

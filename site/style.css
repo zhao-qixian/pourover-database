@@ -105,3 +105,25 @@ body[data-page=terms] .item{padding:8px 12px}.term-name{height:68px;margin-botto
  .filters>.bean-picker{grid-column:2;grid-row:1}
  .filters>[data-filter="month"]{grid-column:1;grid-row:2}
 }
+
+/* Compact brewing parameters and public tasting notes. */
+.bare-fields{display:grid;gap:16px;margin-bottom:11.2px;min-width:0}
+.bare-1{grid-template-columns:1fr}.bare-3{grid-template-columns:repeat(3,minmax(0,1fr))}.bare-4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.text-fields .text-field.flavor-field{height:80px}
+.text-fields .flavor-field .text-value{height:52px;padding-top:4px;padding-bottom:4px}
+.filters{grid-template-columns:minmax(220px,3.2fr) .8fr 1.25fr 1.1fr .85fr minmax(84px,.8fr)}
+#list-controls>.bean-picker{margin-bottom:11.2px}.bean-picker>button{width:100%;overflow:hidden;white-space:nowrap}
+@media(max-width:1200px){.filters{grid-template-columns:repeat(3,minmax(0,1fr))}.filters>.search-controls{grid-column:1/-1}}
+@media(max-width:640px){
+ .filters{grid-template-columns:repeat(3,minmax(0,1fr))}
+ .filters>[data-filter="month"]{grid-column:auto;grid-row:auto}
+ .filters>.search-controls{grid-column:1/-1}
+ .filters>#reset-filters{grid-column:2/4}
+ .stage{overflow:visible}.stage-grid{min-width:0;grid-template-columns:90px minmax(0,1fr);grid-template-rows:auto;gap:8px}
+ .stage-grid>:nth-child(1){grid-area:1/1}.stage-grid>:nth-child(2){grid-area:1/2}
+ .stage-grid>:nth-child(6){grid-area:2/1}.stage-grid>:nth-child(7){grid-area:2/2}
+ .stage-grid>:nth-child(3){grid-area:3/1/4/3}.stage-grid>:nth-child(4){grid-area:4/1/5/3}
+ .stage-grid>:nth-child(8){grid-area:5/1/6/3}.stage-grid>:nth-child(9){grid-area:6/1/7/3}
+ .stage-grid>:nth-child(5),.stage-grid>:nth-child(10){display:none}
+ .stage-numeric{grid-template-columns:1fr 1fr}.stage-timing{grid-template-columns:1fr 28px 1fr;gap:4px}
+}
