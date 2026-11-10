@@ -7,6 +7,8 @@ function setTheme(light){
  $('#theme-switch').setAttribute('aria-checked',String(light));
  $('meta[name="theme-color"]').content=light?'#EFE3D3':'#241919';
  try{localStorage.setItem('pour-over-theme',light?'light':'dark')}catch{}
+ const frame=document.querySelector('#flavor-frame');
+ frame?.contentWindow?.postMessage({type:'public-flavors:theme',theme:light?'light':'dark'},location.origin);
 }
 let savedTheme='dark';try{savedTheme=localStorage.getItem('pour-over-theme')||'dark'}catch{}
 setTheme(savedTheme==='light');
@@ -20,6 +22,56 @@ const labels={bypass_water_g:'Bypass g/1:n',farm:'庄园',duration_seconds:'总�
 const label=k=>k==='water_g'?'注水 g':k==='yield_g'?'出液 g':k==='duration_seconds'?'总时间':db.presentation?.labels[k]||labels[k]||db.labels[k]||db.stage_labels[k]||k;
 const gallerySelections=new Map();
 const selections={brews:0,beans:0,terms:0};
+const flavorLinks={beans:new Map(),brews:new Map()};
+let flavorFocus=null;
+function indexFlavors(){
+ for(const f of db.flavor_data?.flavors||[])for(const [kind,key] of [['beans','beanIds'],['brews','brewIds']]){
+  for(const id of f[key]){const links=flavorLinks[kind];if(!links.has(String(id)))links.set(String(id),[]);links.get(String(id)).push(f);}
+ }
+}
+function flavorCards(flavors,description){
+ return '<div class="flavor-cards" aria-label="'+esc(description)+'">'+flavors.map(f=>{
+  const color=f.status==='approved'&&/^#[0-9a-f]{6}$/i.test(f.hex)?f.hex:null;
+  const rgb=color?.slice(1).match(/../g).map(n=>parseInt(n,16));
+  const text=rgb&&rgb[0]*.299+rgb[1]*.587+rgb[2]*.114>150?'#241919':'#FFF9EF';
+  const status=f.status==='pending'?(f.is_reference?'SCA待确认':'待确认'):f.status==='uncolored'?'不配色':'已配色';
+  return '<a class="flavor-card '+(f.status==='pending'?'pending':'')+'" href="#/flavors/'+encodeURIComponent(f.id)+'" data-flavor-id="'+esc(f.id)+'" '+(color?'style="background:'+color+';color:'+text+'"':'')+' title="'+esc('打开风味盘 · '+status+(color?' · '+color:''))+'">'+esc(f.name)+'</a>';
+ }).join('')+(flavors.length?'':'<span class="caption">暂无关联风味</span>')+'</div>';
+}
+function beanFlavorFields(r){
+ const linked=db.brews.filter(b=>b.coffee_id===r.id&&b.result),tasted=new Map();
+ for(const b of linked)for(const f of flavorLinks.brews.get(String(b.id))||[])tasted.set(f.id,f);
+ const text=[...new Set(linked.flatMap(b=>val(brew(b).personal_flavors)||[]))].join('、');
+ return '<div class="bean-flavor-fields">'+field('官方风味',str(val(r.coffee.flavors)),'flavors')+flavorCards(flavorLinks.beans.get(String(r.id))||[],'官方风味卡')+field('喝到的风味',text,'tasted_flavors')+flavorCards([...tasted.values()],'喝到的风味卡')+'</div>';
+}
+function sendFlavorData(){
+ if(page!=='flavors')return;
+ const frame=$('#flavor-frame');if(!frame)return;
+ frame.contentWindow.postMessage({type:'public-flavors:render',theme:document.documentElement.dataset.theme,
+  data:{...(db.flavor_data||{flavors:[],beans:{},brews:{}}),readonly:true,previewCandidates:true,focus_flavor:flavorFocus}},location.origin);
+}
+function renderFlavors(id){
+ flavorFocus=id?{id,nonce:crypto.randomUUID()}:null;
+ if(!$('#flavor-frame')){
+  const frame=document.createElement('iframe');frame.id='flavor-frame';frame.title='风味色盘';
+  frame.src='./flavors/index.html?v='+encodeURIComponent(manifest.version);
+  $('#flavor-workspace').append(frame);
+ }
+ sendFlavorData();
+}
+window.addEventListener('message',event=>{
+ const frame=$('#flavor-frame');if(!frame||event.source!==frame.contentWindow||event.origin!==location.origin)return;
+ const message=event.data;if(!message||typeof message!=='object')return;
+ if(message.type==='public-flavors:ready')sendFlavorData();
+ if(message.type==='public-flavors:height'&&Number.isFinite(message.height))frame.style.height=Math.max(420,Math.min(20000,message.height))+'px';
+ if(message.type==='public-flavors:select'&&page==='flavors'&&db.flavor_data?.flavors.some(f=>f.id===message.id)){
+  history.replaceState(null,'','#/flavors/'+encodeURIComponent(message.id));
+ }
+ if(message.type==='public-flavors:open'){
+  const kind=message.kind==='bean'?'beans':message.kind==='brew'?'brews':null;
+  if(kind&&db[kind].some(r=>String(r.id)===String(message.id)))location.hash='#/'+kind+'/'+message.id+(kind==='brews'?'?tab=flavors':'');
+ }
+});
 let imageSource;
 let reviewFrame=0;
 const reviewResize=new ResizeObserver(scheduleReviewLayout);
@@ -210,7 +262,7 @@ function renderList(){
 function beanFields(c,display={}){
  const names=val(c.varieties)||[],mapping=val(c.varieties_english)||[],translations=Object.fromEntries(mapping.filter(v=>v.english).map(v=>[v.original,v.english]));
  const varieties=names.length?names.map(n=>translations[n]||n).join('、'):mapping.map(v=>v.english||v.original).join('、');
- return '<div class="fields">'+['roaster','product_name','country','region','farm','flavors'].map(k=>field(label(k),formatted(c[k],k,c,display),k)).join('')+field('品种',varieties,'varieties')+'<div class="field" data-field="process"><span class="label">处理法</span><div class="process-values"><span class="value" title="'+esc(str(val(c.process_category)))+'">'+esc(str(val(c.process_category)))+'</span><span class="value" title="'+esc(str(val(c.process_detail)))+'">'+esc(str(val(c.process_detail)))+'</span></div></div>'+'<div class="field" data-field="roast"><span class="label">烘焙</span><div class="roast-values"><span class="value" data-field="roast_date" title="'+esc(str(val(c.roast_date)))+'">'+esc(str(val(c.roast_date)))+'</span><span class="value" data-field="roast_level">'+esc(val(c.roast_level)||'待核对')+'</span></div></div>'+field(label('price_per_g'),formatted(c.price_per_g,'price_per_g',c,display),'price_per_g')+'</div>';
+ return '<div class="fields">'+['roaster','product_name','country','region','farm'].map(k=>field(label(k),formatted(c[k],k,c,display),k)).join('')+'<div class="field-empty"></div>'+field('品种',varieties,'varieties')+'<div class="field" data-field="process"><span class="label">处理法</span><div class="process-values"><span class="value" title="'+esc(str(val(c.process_category)))+'">'+esc(str(val(c.process_category)))+'</span><span class="value" title="'+esc(str(val(c.process_detail)))+'">'+esc(str(val(c.process_detail)))+'</span></div></div>'+'<div class="field" data-field="roast"><span class="label">烘焙</span><div class="roast-values"><span class="value" data-field="roast_date" title="'+esc(str(val(c.roast_date)))+'">'+esc(str(val(c.roast_date)))+'</span><span class="value" data-field="roast_level">'+esc(val(c.roast_level)||'待核对')+'</span></div></div>'+field(label('price_per_g'),formatted(c.price_per_g,'price_per_g',c,display),'price_per_g')+'</div>';
 }
 function ratingGuide(){
  const lines=[
@@ -236,7 +288,7 @@ function renderDetail(r){
     const bare=keys=>'<div class="bare-fields bare-'+keys.length+'">'+keys.map(k=>'<span class="value" aria-label="'+esc(label(k))+'">'+esc(val(b[k])==null&&!(k==='sieve_mesh'&&val(b.sieved)!=null)?'':formatted(b[k],k,b,display))+'</span>').join('')+'</div>';
     html+='<div class="brew-data-sections"><div class="brew-parameters"><h4>设备</h4>'+bare(['grinder','grind_parts','sieve_mesh'])+bare(['dripper','paper','auxiliary','water'])+section('粉量与比例',b,['dose_g',null,'ratio','water_g','yield_ratio','yield_g','ice_ratio','ice_g','cutoff','bypass_water_g'],display)+'</div><section class="brew-recipe-section"><h4>冲煮方案</h4>'+fields(b,['temperature_c','duration_seconds'],display)+'<div class="text-value recipe">'+esc(val(b.recipe))+'</div></section></div><hr class="stages-divider">'+stages(val(b.stages),val(b.dose_g));
    }
-   if(tab===1)html+='<div class="text-fields">'+textField(label('review'),val(b.review),'review-field')+textField(label('personal_flavors'),str(val(b.personal_flavors)),'flavor-field')+'</div><hr><div class="rating-row"><div class="score"><label>评分</label><span class="value '+(r.score==null?'missing':'')+'">'+(r.score==null?'未评分':r.score.toFixed(1))+'</span></div>'+ratingGuide()+'</div>';
+   if(tab===1)html+='<div class="text-fields">'+textField(label('review'),val(b.review),'review-field')+'<div class="personal-flavors">'+textField(label('personal_flavors'),str(val(b.personal_flavors)),'flavor-field')+flavorCards(flavorLinks.brews.get(String(r.id))||[],'个人风味卡')+'</div>'+'</div><hr><div class="rating-row"><div class="score"><label>评分</label><span class="value '+(r.score==null?'missing':'')+'">'+(r.score==null?'未评分':r.score.toFixed(1))+'</span></div>'+ratingGuide()+'</div>';
    html+='</div></div><div class="evidence">'+gallery(r.images,'evidence',r.image_labels)+'</div></div><details class="narrow-photo"><summary>视频截图</summary><div class="details-body">'+gallery(r.images,'evidence',r.image_labels)+'</div></details>';
   }
  }
@@ -244,7 +296,7 @@ function renderDetail(r){
   const c=r.coffee;
   html='<h2>'+esc(beanName(r))+'</h2><p class="caption">关联 '+r.brew_count+' 次冲煮</p><button id="bean-brews">查看这包豆的冲煮</button>'+tabs(['豆子资料','来源与历史'])+panel();
   if(tab===0){
-   html+='<div class="bean-layout">'+beanFields(c,r.display)+'<div class="bean-photo">'+gallery(r.photos,'bean')+'</div></div><h3 class="bean-brews-heading">冲煮记录</h3>';
+   html+='<div class="bean-layout"><div class="bean-information">'+beanFields(c,r.display)+beanFlavorFields(r)+'</div><div class="bean-photo">'+gallery(r.photos,'bean')+'</div></div><h3 class="bean-brews-heading">冲煮记录</h3>';
    const linked=db.brews.filter(x=>x.coffee_id===r.id&&x.result),scores=linked.map(x=>x.score).filter(x=>x!=null),best=scores.length?Math.max(...scores):null;
    html+=linked.length?linked.map(x=>'<a class="brew-card '+(x.score!=null&&x.score===best?'best':'')+'" href="#/brews/'+x.id+'"><div class="brew-card-text"><p><strong>'+esc(val(brew(x).brew_date)||'日期未填写')+' · '+(x.score==null?'未评分':x.score.toFixed(1)+' / 5')+(x.score!=null&&x.score===best?' · 最高分':'')+'</strong></p><p>'+esc(val(brew(x).review)||'暂无个人复盘')+'</p></div></a>').join(''):'<p class="caption">这包豆还没有冲煮记录。</p>';
    const recipe=r.recipe||{};
@@ -264,9 +316,14 @@ function renderDetail(r){
 }
 function route(){
  closeSelect();
- const previous=page,scroll=$('.items')?.scrollTop||0,m=location.hash.match(/^#\/(brews|beans|terms)(?:\/(\d+))?$/);
+ const previous=page,scroll=$('.items')?.scrollTop||0,m=location.hash.match(/^#\/(brews|beans|terms|flavors)(?:\/([\w-]+))?(?:\?tab=(flavors))?$/);
  if($('#lightbox').open)closeImage();
  page=m?.[1]||'brews';selected=Number(m?.[2]||selections[page]||0);if(previous!==page)tab=0;
+ document.body.dataset.page=page;document.body.classList.remove('sidebar-mobile-open');
+ document.querySelectorAll('nav a').forEach(a=>a.setAttribute('aria-current',a.dataset.page===page?'page':'false'));
+ $('.workspace').hidden=page==='flavors';$('#filters').hidden=page==='flavors';$('#flavor-workspace').hidden=page!=='flavors';
+ if(page==='flavors'){$('#title').textContent='风味盘';reviewResize.disconnect();renderFlavors(m?.[2]);return;}
+ if(m?.[3]==='flavors'&&page==='brews')tab=1;
  const row=db[page].find(x=>x.id===selected);
  if(row&&m?.[2]&&!filtered().some(x=>x.id===selected)){for(const k of Object.keys(state[page]))if(!['sort','desc'].includes(k))state[page][k]='';}
  document.body.dataset.page=page;document.body.classList.remove('sidebar-mobile-open');
@@ -321,6 +378,7 @@ $('#lightbox').addEventListener('cancel',e=>{e.preventDefault();closeImage()});
  const bytes=await response.arrayBuffer();const hash=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))).map(x=>x.toString(16).padStart(2,'0')).join('');
  if(hash!==manifest.snapshot_sha256)throw Error('数据完整性验证失败，请稍后刷新');
  db=JSON.parse(new TextDecoder().decode(bytes));if(db.schema!==1)throw Error('不支持的数据版本');
+ indexFlavors();
  state.terms.kind=[...new Set(db.terms.map(t=>t.kind))].sort()[0]||'';
  $('#updated').textContent='更新于 '+new Date(manifest.published_at).toLocaleString('zh-CN',{timeZone:'Asia/Shanghai'})+'（北京时间）';
  route();

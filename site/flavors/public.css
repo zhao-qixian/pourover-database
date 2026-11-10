@@ -1,0 +1,8 @@
+/* Isolated frame shares the public site's theme, type and available space. */
+html,body{background:var(--bg)}.shell{max-width:none}.top{padding-top:4px}
+.layout{grid-template-columns:minmax(0,1fr) minmax(280px,.48fr)}
+.layout>.panel:last-child{min-width:0}.flavor-row,.record{overflow-wrap:anywhere}
+:root[data-theme=light]{color-scheme:light;--bg:#EFE3D3;--panel:#DFCCB5;--field:#D5BCA3;--text:#382B25;--muted:#705744;--amber:#925A42;--wine:#D5BCA3;--line:#C2A990}
+[data-theme=light] .tooltip{background:#EFE3D3}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+@media(max-width:800px){.layout{grid-template-columns:minmax(0,1fr)}.toolbar .search{max-width:none}.stats{flex-wrap:wrap;gap:12px}.top{flex-direction:column}.panel{padding:14px}}

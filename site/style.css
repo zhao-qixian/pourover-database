@@ -173,6 +173,22 @@ body[data-page=brews] .brew-data-sections .parameter-section .fields{grid-templa
 #theme-switch:focus-visible{outline:none}#theme-switch:focus-visible .theme-track{outline:2px solid var(--accent);outline-offset:4px}
 @media(prefers-reduced-motion:reduce){.theme-track>span{transition:none}}
 
+/* Flavor associations share the editor's saved cards, separate from text. */
+[hidden]{display:none!important}
+#flavor-frame{display:block;width:100%;height:850px;border:0;color-scheme:normal}
+.bean-information,.personal-flavors{min-width:0}
+.bean-flavor-fields{--flavor-label:calc((100% - 16px)/6.6 - 8px);margin-top:12px}
+.bean-flavor-fields>.field{grid-template-columns:var(--flavor-label) minmax(0,1fr);grid-template-rows:auto;gap:16px;margin:0}
+.bean-flavor-fields>.field .value{white-space:pre-wrap;overflow-wrap:anywhere}
+.flavor-cards{display:flex;flex-wrap:wrap;gap:7px;padding:4px 12px 12px;min-width:0}
+.bean-flavor-fields>.flavor-cards{margin-left:calc(var(--flavor-label) + 16px)}
+.flavor-card{display:inline-flex;align-items:center;min-height:31px;padding:3px 10px;border:1px solid var(--line);border-radius:7px;font:400 14px/1.55 var(--body);overflow-wrap:anywhere}
+.flavor-card.pending{border-style:dashed}
+.flavor-card:hover{outline:1px solid var(--accent);outline-offset:2px}
+.personal-flavors .flavor-field{height:80px!important}
+.personal-flavors .flavor-field .text-value{height:52px!important}
+@media(max-width:640px){.bean-flavor-fields{--flavor-label:90px}.bean-flavor-fields>.field{gap:10px}.bean-flavor-fields>.flavor-cards{margin-left:100px}.flavor-cards{padding-left:4px;padding-right:0}}
+
 /* Browser-independent dropdowns match the editor's type and 44px option rows. */
 .select-control{min-width:0;position:relative}.select-control>select[hidden]{display:none!important}
 .select-trigger{width:100%;height:40px;min-width:0;display:block;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:8px 32px 8px 8px;border-color:transparent;color:var(--text);font:400 14px/1.6 var(--body)}
