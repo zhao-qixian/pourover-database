@@ -105,7 +105,12 @@
  }
  function updateView(){const fs=pickedFlavors();if(!fs.some(f=>f.id===state.selected))state.selected=null;$('#list-title').textContent=state.region?'附近的风味':'风味列表';$('#list-count').textContent=`${fs.length} 个`;
   $('#flavor-list').innerHTML=fs.length?fs.map(f=>row(f)).join(''):'<p class="empty">这里暂时没有匹配的风味。试试其他区域或更大的选取半径。</p>';
-  $('#flavor-list').querySelectorAll('[data-flavor]').forEach(b=>b.onclick=()=>{state.selected=b.dataset.flavor;publicMessage({type:'public-flavors:select',id:state.selected});updateView();drawMarkers();});renderDetail();height();
+  $('#flavor-list').querySelectorAll('[data-flavor]').forEach(b=>b.onclick=()=>{
+   state.selected=b.dataset.flavor;
+   const color=displayed(currentFlavor());
+   if(color){state.viewBrightness=toHSV(color).v;$('#view-brightness').value=state.viewBrightness*100;$('#view-brightness-value').textContent=(state.viewBrightness*100).toFixed(1)+'%';}
+   publicMessage({type:'public-flavors:select',id:state.selected});updateView();drawPalette();
+  });renderDetail();height();
  }
  function renderDetail(){const f=currentFlavor();if(!f){$('#detail').innerHTML='<div class="detail"><p class="muted">选择一个风味，查看官方标注的豆子与实际记录它的冲煮。</p></div>';return;}
   const col=displayed(f);$('#detail').innerHTML=`<div class="detail"><div class="detail-title">${swatch(col)}<div><h3>${escape(f.name)}</h3><small>${escape(col||'未配色')} · ${statusText(f)}</small></div>${!data.readonly?'<button id="detail-pair" '+(sending?'disabled':'')+'>配色</button>':''}</div><div class="record-tabs"><button data-record-kind="beans" class="${state.recordKind==='beans'?'active':''}">官方标注 · ${f.beanIds.length} 包豆</button><button data-record-kind="brews" class="${state.recordKind==='brews'?'active':''}">实际喝到 · ${f.brewIds.length} 杯</button></div><div class="records" id="records"></div><p class="source-note">官方标注不自动算作实际喝到。这里只统计各记录已关联的风味卡。</p></div>`;
