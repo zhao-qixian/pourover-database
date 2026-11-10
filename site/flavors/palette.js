@@ -246,7 +246,7 @@
   const coords=e=>new DOMPoint(e.clientX,e.clientY).matrixTransform(svg.getScreenCTM().inverse());
   svg.onpointermove=e=>{if(state.mode!=='view')return;const p=coords(e);if(Math.hypot(p.x-300,p.y-300)>270){selection(state.region);$('#tooltip').hidden=true;return;}
    selection(p);const found=candidates().filter(f=>{const hex=displayed(f);if(!hex)return false;const q=point(hex);return Math.hypot(p.x-q.x,p.y-q.y)<=state.radius;});
-   const tip=$('#tooltip');tip.hidden=false;tip.textContent=found.length?`${found.length} 个风味 · ${found.slice(0,7).map(f=>f.name).join('、')}${found.length>7?'…':''}`:'附近暂无风味';
+   const tip=$('#tooltip');tip.hidden=false;tip.textContent=found.length?found.map(f=>f.name).join('、'):'附近暂无风味';
    const box=wrap.getBoundingClientRect();tip.style.left=Math.min(e.clientX-box.left+14,Math.max(0,box.width-240))+'px';tip.style.top=Math.max(0,e.clientY-box.top-60)+'px';
   };
   svg.onpointerleave=()=>{selection(state.mode==='view'?state.region:null);$('#tooltip').hidden=true;};
