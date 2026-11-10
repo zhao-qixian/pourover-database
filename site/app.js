@@ -374,7 +374,11 @@ $('#lightbox').addEventListener('cancel',e=>{e.preventDefault();closeImage()});
 (async()=>{try{
  let response=await fetch('./publication.json',{cache:'no-store'});if(!response.ok)throw Error('无法读取发布信息');manifest=await response.json();
  if(!/^snapshots\/[a-f0-9]{64}\.json$/.test(manifest.snapshot))throw Error('快照地址无效');
- response=await fetch('./'+manifest.snapshot);if(!response.ok)throw Error('无法读取数据快照');
+ response=await fetch('./'+manifest.snapshot);
+ // A tab that fetched the previous manifest just before deployment can still
+ // read that immutable snapshot from its pinned repository revision.
+ if(!response.ok&&/^https:\/\/raw\.githubusercontent\.com\/zhao-qixian\/pourover-database\/[a-f0-9]{40}\/site\/$/.test(manifest.media_base||''))response=await fetch(manifest.media_base+manifest.snapshot);
+ if(!response.ok)throw Error('无法读取数据快照');
  const bytes=await response.arrayBuffer();const hash=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))).map(x=>x.toString(16).padStart(2,'0')).join('');
  if(hash!==manifest.snapshot_sha256)throw Error('数据完整性验证失败，请稍后刷新');
  db=JSON.parse(new TextDecoder().decode(bytes));if(db.schema!==1)throw Error('不支持的数据版本');

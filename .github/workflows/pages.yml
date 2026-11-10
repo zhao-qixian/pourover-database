@@ -9,7 +9,7 @@ permissions:
   id-token: write
 concurrency:
   group: pages
-  cancel-in-progress: false
+  cancel-in-progress: true
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -24,16 +24,34 @@ jobs:
           python - <<'PY'
           import hashlib, json, os, shutil
           from pathlib import Path
-          shutil.copytree('site', '_pages', ignore=shutil.ignore_patterns('media'))
-          p = Path('_pages/publication.json')
-          manifest = json.loads(p.read_text())
+          source = Path('site').resolve()
+          destination = Path('_pages')
+          destination.mkdir()
+          manifest = json.loads((source / 'publication.json').read_text())
+          for name, expected in manifest['files'].items():
+              if name.startswith('media/'):
+                  continue
+              if Path(name).is_absolute() or '..' in Path(name).parts:
+                  raise ValueError('Invalid public file: ' + name)
+              original = (source / name).resolve()
+              if not original.is_relative_to(source) or original.is_symlink():
+                  raise ValueError('Invalid public file: ' + name)
+              if hashlib.sha256(original.read_bytes()).hexdigest() != expected:
+                  raise ValueError('Public file checksum mismatch: ' + name)
+              target = destination / name
+              target.parent.mkdir(parents=True, exist_ok=True)
+              shutil.copyfile(original, target)
           manifest['media_base'] = 'https://raw.githubusercontent.com/' + os.environ['GITHUB_REPOSITORY'] + '/' + os.environ['GITHUB_SHA'] + '/site/'
           manifest['remote_media'] = {k: v for k, v in manifest['files'].items() if k.startswith('media/')}
           manifest['files'] = {k: v for k, v in manifest['files'].items() if not k.startswith('media/')}
-          p.write_text(json.dumps(manifest, ensure_ascii=False), encoding='utf-8')
+          (destination / 'publication.json').write_text(json.dumps(manifest, ensure_ascii=False), encoding='utf-8')
+          (destination / '.nojekyll').touch()
           PY
       - uses: actions/upload-pages-artifact@v4
         with:
+          name: github-pages-${{ github.run_id }}-${{ github.run_attempt }}
           path: _pages
       - uses: actions/deploy-pages@v4
         id: deployment
+        with:
+          artifact_name: github-pages-${{ github.run_id }}-${{ github.run_attempt }}
