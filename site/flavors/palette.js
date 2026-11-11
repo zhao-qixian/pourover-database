@@ -231,10 +231,13 @@
   const refs=data.flavors.filter(f=>state.newRefs.includes(f.id)&&(actual(f)||(f.status==='pending'&&f.candidate_hex)));
   const recommendations=(data.new_flavor_draft?.colors||[]).map((c,i)=>({id:'recommendation-'+i,name:'建议 '+(i+1),status:'pending',candidate_hex:c.hex,recommendationIndex:i}));
   const fs=state.mode==='add'?[...refs,...recommendations]:state.mode==='pair'?data.flavors.filter(f=>actual(f)||(f.status==='pending'&&f.candidate_hex)):candidates().filter(f=>displayed(f));
-  g.innerHTML=fs.map(f=>{const hex=state.mode!=='view'?(actual(f)||f.candidate_hex):displayed(f),p=point(hex);
-   return `<g data-marker="${f.id}" tabindex="0" role="button" aria-label="${escape(f.name)}，${hex}，${f.recommendationIndex!==undefined?'推荐色':statusText(f)}"><title>${escape(f.name)} · ${hex}</title><circle class="marker-hit" cx="${p.x}" cy="${p.y}" r="10"/><circle class="marker ${f.status==='pending'?'pending':''}" cx="${p.x}" cy="${p.y}" r="${state.selected===f.id?6.5:4.5}" fill="${escape(hex)}"/></g>`;}).join('');
+  // Paint the selected flavor last so nearby colors cannot cover it.
+  const ordered=state.mode==='view'?[...fs.filter(f=>f.id!==state.selected),...fs.filter(f=>f.id===state.selected)]:fs;
+  g.innerHTML=ordered.map(f=>{const hex=state.mode!=='view'?(actual(f)||f.candidate_hex):displayed(f),p=point(hex),selected=state.mode==='view'&&state.selected===f.id;
+   const halo=selected?`<circle class="selected-marker-halo" cx="${p.x}" cy="${p.y}" r="13" fill="none" stroke="#fff7e9" stroke-width="5" pointer-events="none"/><circle class="selected-marker-ring" cx="${p.x}" cy="${p.y}" r="13" fill="none" stroke="#38221c" stroke-width="2" pointer-events="none"/>`:'';
+   return `<g data-marker="${f.id}" tabindex="0" role="button" aria-pressed="${selected}" aria-label="${escape(f.name)}，${hex}，${f.recommendationIndex!==undefined?'推荐色':statusText(f)}"><title>${escape(f.name)} · ${hex}</title>${halo}<circle class="marker-hit" cx="${p.x}" cy="${p.y}" r="${selected?16:10}"/><circle class="marker ${f.status==='pending'?'pending':''}" cx="${p.x}" cy="${p.y}" r="${selected?9:4.5}" fill="${escape(hex)}"/></g>`;}).join('');
   g.querySelectorAll('[data-marker]').forEach(el=>{
-   const activate=()=>{const f=fs.find(f=>f.id===el.dataset.marker);if(state.mode==='view'){state.region=point(displayed(f));state.selected=f.id;selection(state.region);updateView();}else if(state.mode==='add'){if(f.recommendationIndex!==undefined)state.newIndex=f.recommendationIndex;state.newPick=toHSV(actual(f)||f.candidate_hex);updateAddPicker();}else{state.pick=toHSV(actual(f)||f.candidate_hex);drawPalette();updatePicker();}};
+   const activate=()=>{const f=fs.find(f=>f.id===el.dataset.marker);if(state.mode==='view'){state.region=point(displayed(f));state.selected=f.id;selection(state.region);updateView();drawMarkers();}else if(state.mode==='add'){if(f.recommendationIndex!==undefined)state.newIndex=f.recommendationIndex;state.newPick=toHSV(actual(f)||f.candidate_hex);updateAddPicker();}else{state.pick=toHSV(actual(f)||f.candidate_hex);drawPalette();updatePicker();}};
    el.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();activate();}};
    if(state.mode==='add')el.onclick=e=>{e.stopPropagation();activate();};
   });
