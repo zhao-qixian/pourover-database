@@ -10,7 +10,7 @@
  const title=document.createElement('h2');title.className='welcome-title';title.setAttribute('role','img');title.setAttribute('aria-label','Pour Over Database');
  const signature=document.createElement('span');signature.className='welcome-signature';signature.setAttribute('role','img');signature.setAttribute('aria-label','弦！的手写签名');copy.append(title,signature);
  const skip=document.createElement('span');skip.className='skip-intro';skip.textContent='点击任意位置进入';overlay.append(copy,skip);
- document.body.append(overlay);const previous=document.activeElement;overlay.focus({preventScroll:true});let timer,closed=false;
+ document.body.append(overlay);document.documentElement.classList.remove('pod-welcome-boot');clearTimeout(window.__podBootFallback);const previous=document.activeElement;overlay.focus({preventScroll:true});let timer,closed=false;
  function close(){if(closed)return;closed=true;clearTimeout(timer);overlay.classList.add('leaving');setTimeout(()=>{overlay.remove();previous?.focus({preventScroll:true})},matchMedia('(prefers-reduced-motion: reduce)').matches?0:400)}
  overlay.addEventListener('click',close);overlay.addEventListener('keydown',e=>{if(['Escape','Enter',' '].includes(e.key)){e.preventDefault();close()}if(e.key==='Tab')e.preventDefault()});
  async function readyImage(element){

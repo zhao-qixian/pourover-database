@@ -27,7 +27,8 @@ function layout(){host.querySelectorAll('.stage').forEach((row,i)=>{const s=stag
  const occupied=[...track.querySelectorAll('.time')].map(e=>{const r=e.getBoundingClientRect();return [Math.max(0,r.left-base-4),Math.min(track.clientWidth,r.right-base+4)]}).filter(([a,b])=>b>a).sort((a,b)=>a[0]-b[0]);
  let cursor=0;const gaps=[];for(const [a,b]of occupied){if(a-cursor>=width)gaps.push([cursor,a-width]);cursor=Math.max(cursor,b)}if(track.clientWidth-cursor>=width)gaps.push([cursor,track.clientWidth-width]);
  const candidates=gaps.map(([a,b])=>Math.max(a,Math.min(b,desired))).sort((a,b)=>Math.abs(a-desired)-Math.abs(b-desired));
- track.style.setProperty('--label-left',`${candidates[0]??Math.max(0,Math.min(track.clientWidth-width,desired))}px`);
+ const labelLeft=readonly&&document.body.classList.contains('public-phone')?Math.max(12,Math.min(track.clientWidth-width,desired)):candidates[0]??Math.max(0,Math.min(track.clientWidth-width,desired));
+ track.style.setProperty('--label-left',`${labelLeft}px`);
  const method=row.querySelector('.method');const measure=document.createElement('span');measure.className='measure';measure.style.font=getComputedStyle(method).font;measure.textContent=method.value;document.body.append(measure);method.classList.toggle('long',measure.getBoundingClientRect().width+14>px);measure.remove();method.style.height='auto';method.style.height=`${method.scrollHeight+2}px`;
  });}
 function commit(el){const row=el.closest('.stage');if(!row)return;const i=+row.dataset.index,s=stages[i],key=el.dataset.key;let value;
