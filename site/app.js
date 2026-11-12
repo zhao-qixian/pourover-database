@@ -183,14 +183,16 @@ function section(name,g,keys,display){return '<section class="parameter-section"
 function textField(name,text,extra=''){return '<div class="text-field '+extra+'"><label>'+esc(name)+'</label><div class="text-value">'+esc(text)+'</div></div>'}
 function time(n){return n==null?'':Math.floor(n/60)+' : '+String(Math.round((n%60)*100)/100).padStart(2,'0')}
 const timelinePayloads=new Map();
+const timelinePhone=matchMedia('(max-width:640px)');
+timelinePhone.addEventListener('change',()=>{for(const [id,data] of timelinePayloads){data.mobile=timelinePhone.matches;document.getElementById(id)?.contentWindow?.postMessage({type:'timeline:data',data},location.origin);}});
 function stages(items,dose,displays=[]){
  const list=items||[];if(!list.length)return '<p class="caption">未记录注水阶段</p>';
  const id='timeline-'+crypto.randomUUID();
  const total=page==='brews'?val(brew(db.brews.find(r=>r.id===selected)).duration_seconds):null;
  const data=list.map((s,i)=>{const start=val(s.start_seconds),duration=val(s.pour_seconds),wait=val(s.wait_seconds),stop=start!=null&&duration!=null?start+duration:null,water=val(s.water_g),output=val(s.yield_g);return {uid:String(i),start,pourEnd:stop,end:stop!=null&&wait!=null?stop+wait:(i+1<list.length?val(list[i+1].start_seconds):total),water_g:water,yield_g:output,kind:output!=null?'液':'水',amount:output??water,temp:val(s.temperature_c),method:val(s.technique)||'',ratio:null};});
  for(const key of timelinePayloads.keys())if(!document.getElementById(key))timelinePayloads.delete(key);
- timelinePayloads.set(id,{stages:data,dose,readonly:true,context:id,theme:document.documentElement.dataset.theme});
- return '<iframe class="timeline-frame" id="'+id+'" title="分段冲煮方案" src="./timeline/index.html?v=eb332903d93e1929" style="width:100%;height:'+Math.max(140,list.length*125)+'px;border:0;display:block"></iframe>';
+ timelinePayloads.set(id,{stages:data,dose,readonly:true,mobile:timelinePhone.matches,context:id,theme:document.documentElement.dataset.theme});
+ return '<iframe class="timeline-frame" id="'+id+'" title="分段冲煮方案" src="./timeline/index.html?v=77ad93721cac0ea6" style="width:100%;height:'+Math.max(140,list.length*125)+'px;border:0;display:block"></iframe>';
 }
 window.addEventListener('message',e=>{if(e.origin!==location.origin)return;const frame=[...document.querySelectorAll('.timeline-frame')].find(f=>f.contentWindow===e.source);if(!frame)return;if(e.data?.type==='timeline:ready')e.source.postMessage({type:'timeline:data',data:timelinePayloads.get(frame.id)},location.origin);if(e.data?.type==='timeline:height'&&Number.isFinite(e.data.height))frame.style.height=Math.max(60,Math.min(20000,e.data.height))+'px';});
 new MutationObserver(()=>{document.querySelectorAll('.timeline-frame').forEach(f=>f.contentWindow?.postMessage({type:'timeline:theme',theme:document.documentElement.dataset.theme},location.origin));}).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});

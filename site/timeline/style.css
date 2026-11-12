@@ -40,3 +40,7 @@
 @media(max-width:760px){.stage{grid-template-columns:minmax(0,1fr) 88px}}
 
 html,body{background:var(--bg)}body{padding:0 10px 6px;overflow-x:hidden}.stage+.stage{border:0}.stage{padding:18px 0 12px}.actions{border:0;padding-top:8px}.remove-stage{border:0;font-size:12px;padding:2px 0;margin-top:3px;color:var(--muted)}.stage-name{display:flex;flex-direction:column;align-items:flex-start}.changed{background:var(--edit);border-color:var(--line)}body.readonly input,body.readonly textarea{pointer-events:none}body.readonly input:hover,body.readonly textarea:hover{background:transparent}body.readonly .actions,body.readonly .remove-stage{display:none}.empty{color:var(--muted)}
+
+/* Public phone viewport only; iframe width alone must not affect desktop/local. */
+body.readonly.public-phone .metrics{top:-22px}
+body.readonly.public-phone .stage-name{padding-bottom:32px}
