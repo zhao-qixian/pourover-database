@@ -1,0 +1,18 @@
+#welcome{position:fixed;inset:0;z-index:10000;background:var(--bg);color:var(--text);display:grid;place-items:center;cursor:pointer;opacity:1;transition:opacity .4s ease;outline:none}
+#welcome[hidden]{display:none}#welcome.leaving{opacity:0;pointer-events:none}
+.welcome-copy{text-align:center;transform:translateY(-5vh);animation:arrive .6s ease both;padding:24px}
+#welcome h2{font-family:Caveat,Nunito,cursive;font-weight:400;font-size:clamp(58px,7vw,108px);line-height:1.08;margin:0;letter-spacing:-.02em;color:var(--text)}
+.welcome-rule{display:block;width:48px;height:1px;background:var(--accent);margin:30px auto 25px;opacity:.65}
+.welcome-signature{display:block;width:88px;height:98px;margin:32px auto 0;background:var(--text);mask:url('./signature.png') center/contain no-repeat;-webkit-mask:url('./signature.png') center/contain no-repeat}
+#welcome p{font-family:Nunito,'LXGW WenKai Screen',sans-serif;font-size:21px;letter-spacing:.32em;text-indent:.32em;margin:0;color:var(--muted)}
+.title-break{display:none}.skip-intro{position:absolute;bottom:max(35px,env(safe-area-inset-bottom));left:0;right:0;text-align:center;color:var(--caption);font:12px Nunito,'LXGW WenKai Screen',sans-serif;letter-spacing:.12em;opacity:.65}
+#welcome.two h2{font-family:Nunito,'LXGW WenKai Screen',sans-serif;font-weight:300;font-size:clamp(34px,5vw,68px);line-height:1.35;letter-spacing:.065em;text-indent:.065em;color:var(--accent)}
+#welcome.two .title-break{display:initial}#welcome.two .welcome-rule{width:22px;margin:33px auto 29px;opacity:.85}#welcome.two p{font-size:16px;letter-spacing:.5em;text-indent:.5em;color:var(--text)}
+#welcome.two .welcome-copy{animation-duration:.85s;transform:translateY(-3vh)}
+#preview-tools{position:fixed;bottom:12px;right:16px;z-index:100;display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:8px 12px;border:1px solid var(--line);border-radius:9px;background:var(--panel);box-shadow:0 4px 16px #0002;font:13px Nunito,'LXGW WenKai Screen',sans-serif;max-width:calc(100vw - 32px)}
+#preview-tools button,#preview-tools a{padding:5px 7px;font:inherit;color:var(--text)}#preview-tools>span{color:var(--muted)}
+@keyframes arrive{from{opacity:0}to{opacity:1}}
+@media(max-width:600px){#welcome.one h2{font-size:64px}.one .title-break{display:initial}.welcome-copy{padding:20px}#preview-tools{gap:5px;justify-content:center;left:16px;right:16px}#preview-tools>span{display:none}}
+@media(prefers-reduced-motion:reduce){#welcome{transition:none}.welcome-copy{animation:none!important}}
+
+#welcome{--bg:#241919;--text:#F5E6D5;--caption:#CCB5A6}#welcome[data-theme=light]{--bg:#EFE3D3;--text:#382B25;--caption:#705744}#welcome h2{color:var(--text)!important}#welcome .welcome-signature{background:var(--text)}
