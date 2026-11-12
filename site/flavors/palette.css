@@ -57,3 +57,9 @@
 .recommendations>summary{cursor:pointer;font:21px/1.55 Nunito,MaShan,WenKai,sans-serif}.recommendations[open]>summary{margin-bottom:8px}
 
 .prompt-weight-label{display:flex;justify-content:space-between;margin-top:12px}.prompt-input #prompt-weight{width:100%;padding:0;accent-color:var(--accent)}.prompt-weight-ends{display:flex;justify-content:space-between;font-size:13px;color:var(--muted)}
+
+/* Local embedded components receive the workspace theme explicitly. */
+:root[data-theme="light"]{color-scheme:light;--bg:#EFE3D3;--panel:#DFCCB5;--field:#DFCCB5;--line:#C2A990;--text:#382B25;--muted:#705744;--amber:#925A42;--wine:#D5BCA3}
+[data-theme="light"] .tooltip{background:#EFE3D3F5}
+[data-theme="light"] .record{border-bottom-color:#C2A990}
+[data-theme="light"] .delete-flavor button{color:#963C32}
