@@ -44,3 +44,8 @@ html,body{background:var(--bg)}body{padding:0 10px 6px;overflow-x:hidden}.stage+
 /* Public phone viewport only; iframe width alone must not affect desktop/local. */
 body.readonly.public-phone .metrics{top:-22px}
 body.readonly.public-phone .stage-name{padding-bottom:32px}
+
+/* Amounts and endpoint times share the technique text size in both editors. */
+:root{--stage-text-size:15px}
+.time,.track.crowded .time.join,.metrics,.track.crowded .metrics,.track.incomplete .metrics,.metrics input,.metrics select,.method{font-size:var(--stage-text-size)}
+@media(max-width:760px){:root{--stage-text-size:14px}}
