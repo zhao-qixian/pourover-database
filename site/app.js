@@ -21,6 +21,27 @@ const beanName=r=>title(r)+' · '+(val(r.coffee.roast_date)||'烘焙日期待补
 const labels={bypass_water_g:'Bypass g/1:n',farm:'庄园',duration_seconds:'总时间',process_category:'大类',process_detail:'细节'};
 const label=k=>k==='water_g'?'注水 g':k==='yield_g'?'出液 g':k==='duration_seconds'?'总时间':db.presentation?.labels[k]||labels[k]||db.labels[k]||db.stage_labels[k]||k;
 const gallerySelections=new Map();
+const detailLoads=new Map();
+let searchLoad=null,searchReady=false;
+function loadSearch(){
+ if(searchReady||!db.search_ref)return Promise.resolve();
+ if(!searchLoad)searchLoad=verifiedJson(db.search_ref).then(index=>{for(const kind of ['brews','beans'])for(const row of db[kind])row.search_text=index[kind][row.id];searchReady=true}).catch(error=>{searchLoad=null;throw error});
+ return searchLoad;
+}
+async function verifiedJson(path){
+ if(!/^(snapshots|details)\/[a-f0-9]{64}\.json$/.test(path))throw Error('数据地址无效');
+ let response=await fetch('./'+path,{cache:'force-cache'});
+ if(!response.ok&&/^https:\/\/raw\.githubusercontent\.com\/zhao-qixian\/pourover-database\/[a-f0-9]{40}\/site\/$/.test(manifest.media_base||''))response=await fetch(manifest.media_base+path);
+ if(!response.ok)throw Error('无法读取资料，请稍后重试');
+ const bytes=await response.arrayBuffer();const hash=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))).map(x=>x.toString(16).padStart(2,'0')).join('');
+ if(hash!==path.split('/')[1].slice(0,-5))throw Error('数据完整性验证失败，请稍后刷新');
+ return JSON.parse(new TextDecoder().decode(bytes));
+}
+function loadDetail(row){
+ if(!row?.detail_ref||row.detailLoaded)return Promise.resolve(row);
+ if(!detailLoads.has(row.detail_ref))detailLoads.set(row.detail_ref,verifiedJson(row.detail_ref).then(full=>{if(full.id!==row.id)throw Error('记录编号不一致');Object.assign(row,full,{detailLoaded:true});return row}).catch(error=>{detailLoads.delete(row.detail_ref);throw error}));
+ return detailLoads.get(row.detail_ref);
+}
 const selections={brews:0,beans:0,terms:0};
 const flavorLinks={beans:new Map(),brews:new Map()};
 let flavorFocus=null;
@@ -192,7 +213,7 @@ function stages(items,dose,displays=[]){
  const data=list.map((s,i)=>{const start=val(s.start_seconds),duration=val(s.pour_seconds),wait=val(s.wait_seconds),stop=start!=null&&duration!=null?start+duration:null,water=val(s.water_g),output=val(s.yield_g);return {uid:String(i),start,pourEnd:stop,end:stop!=null&&wait!=null?stop+wait:(i+1<list.length?val(list[i+1].start_seconds):total),water_g:water,yield_g:output,kind:output!=null?'液':'水',amount:output??water,temp:val(s.temperature_c),method:val(s.technique)||'',ratio:null};});
  for(const key of timelinePayloads.keys())if(!document.getElementById(key))timelinePayloads.delete(key);
  timelinePayloads.set(id,{stages:data,dose,readonly:true,mobile:timelinePhone.matches,context:id,theme:document.documentElement.dataset.theme});
- return '<iframe class="timeline-frame" id="'+id+'" title="分段冲煮方案" src="./timeline/index.html?v=dca5ad46b8f0cbc7" style="width:100%;height:'+Math.max(140,list.length*125)+'px;border:0;display:block"></iframe>';
+ return '<iframe class="timeline-frame" id="'+id+'" title="分段冲煮方案" src="./timeline/index.html?v=c29b57742965c278" style="width:100%;height:'+Math.max(140,list.length*125)+'px;border:0;display:block"></iframe>';
 }
 window.addEventListener('message',e=>{if(e.origin!==location.origin)return;const frame=[...document.querySelectorAll('.timeline-frame')].find(f=>f.contentWindow===e.source);if(!frame)return;if(e.data?.type==='timeline:ready')e.source.postMessage({type:'timeline:data',data:timelinePayloads.get(frame.id)},location.origin);if(e.data?.type==='timeline:height'&&Number.isFinite(e.data.height))frame.style.height=Math.max(60,Math.min(20000,e.data.height))+'px';});
 new MutationObserver(()=>{document.querySelectorAll('.timeline-frame').forEach(f=>f.contentWindow?.postMessage({type:'timeline:theme',theme:document.documentElement.dataset.theme},location.origin));}).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
@@ -245,7 +266,7 @@ function renderFilters(){
 }
 function filtered(){
  const s=state[page];let rows=db[page].filter(r=>{
-  const searchable=JSON.stringify(r).toLocaleLowerCase()+(page==='beans'?beanName(r).toLocaleLowerCase():'');
+  const searchable=(r.search_text||JSON.stringify(r)).toLocaleLowerCase()+(page==='beans'?beanName(r).toLocaleLowerCase():'');
   if(s.q&&!searchable.includes(s.q.toLocaleLowerCase()))return false;
   if(page==='terms')return !s.kind||r.kind===s.kind;
   if(page==='brews'){
@@ -260,6 +281,7 @@ function filtered(){
  }return rows;
 }
 function renderList(){
+ if(state[page].q&&db.search_ref&&!searchReady){const requestedPage=page;loadSearch().then(()=>{if(page===requestedPage)renderList()}).catch(error=>{$('#detail').textContent=error.message});return;}
  const rows=filtered();if(!rows.some(r=>r.id===selected))selected=rows[0]?.id||0;
  selections[page]=selected;
  const exportMenu='<div class="popover export-menu"><button data-popover="export-panel" aria-expanded="false" aria-controls="export-panel">导出筛选结果 <span aria-hidden="true">⌄</span></button><div class="popover-panel" id="export-panel" hidden><button id="export-csv">导出筛选结果 CSV</button><button id="export-xlsx">导出筛选结果 Excel</button></div></div>';
@@ -284,6 +306,10 @@ function ratingGuide(){
 }
 function renderDetail(r){
  if(!r){$('#detail').innerHTML='<p class="empty">没有匹配记录，请调整筛选条件。</p>';return}
+ if(r.detail_ref&&!r.detailLoaded){
+  const requestedPage=page;$('#detail').innerHTML='<p class="caption">正在读取已发布资料…</p>';
+  loadDetail(r).then(()=>{if(page===requestedPage&&selected===r.id)renderDetail(r)}).catch(error=>{if(page===requestedPage&&selected===r.id)$('#detail').textContent=error.message});return;
+ }
  let html='';
  if(page==='brews'){
   const b=brew(r),c=coffee(r),display=r.display?.brew||{};
@@ -301,14 +327,14 @@ function renderDetail(r){
  }
  if(page==='beans'){
   const c=r.coffee;
-  html='<h2>'+esc(beanName(r))+'</h2><p class="caption">关联 '+r.brew_count+' 次冲煮</p><button id="bean-brews">查看这包豆的冲煮</button>'+tabs(['豆子资料','来源与历史'])+panel();
+  html='<h2>'+esc(beanName(r))+'</h2><p class="caption">关联 '+r.brew_count+' 次冲煮</p><button id="bean-brews">查看这包豆的冲煮</button>'+tabs(['豆子资料','来源资料'])+panel();
   if(tab===0){
    html+='<div class="bean-layout"><div class="bean-information">'+beanFields(c,r.display)+beanFlavorFields(r)+'</div><div class="bean-photo">'+gallery(r.photos,'bean')+'</div></div><h3 class="bean-brews-heading">冲煮记录</h3>';
    const linked=db.brews.filter(x=>x.coffee_id===r.id&&x.result),scores=linked.map(x=>x.score).filter(x=>x!=null),best=scores.length?Math.max(...scores):null;
    html+=linked.length?linked.map(x=>'<a class="brew-card '+(x.score!=null&&x.score===best?'best':'')+'" href="#/brews/'+x.id+'"><div class="brew-card-text"><p><strong>'+esc(val(brew(x).brew_date)||'日期未填写')+' · '+(x.score==null?'未评分':x.score.toFixed(1)+' / 5')+(x.score!=null&&x.score===best?' · 最高分':'')+'</strong></p><p>'+esc(val(brew(x).review)||'暂无个人复盘')+'</p></div></a>').join(''):'<p class="caption">这包豆还没有冲煮记录。</p>';
    const recipe=r.recipe||{};
    html+='<details class="official-recipe"><summary>官方推荐方案</summary><div class="details-body"><div class="recipe-fields">'+(db.presentation?.recipe_fields||[]).map(([k,name])=>'<div class="stack-field"><label>'+esc(name)+'</label><span class="value">'+esc(str(recipe[k]))+'</span></div>').join('')+'</div>'+(recipe.stages?.length?stages(recipe.stages,null,r.recipe_stage_display):'')+textField('其他',str(recipe.other),'recipe-other')+'</div></details><div class="narrow-photo">'+gallery(r.photos,'bean')+'</div>';
-  }else html+=(r.sources||[]).map(s=>'<section class="source-entry"><p class="caption">'+esc(s.created_at)+' · UTC</p><div class="source-text">'+esc(s.raw_text)+'</div></section>').join('')+jsonDetails('豆子修改历史',r.history)+jsonDetails('图片与推荐方案历史',r.metadata_history)+jsonDetails('全部字段与来源',c)+jsonDetails('包装原文与来源 · 完整资料',r.sources);
+  }else html+=(r.sources||[]).map(s=>'<section class="source-entry"><p class="caption">'+esc(s.created_at)+' · UTC</p><div class="source-text">'+esc(s.raw_text)+'</div></section>').join('')+jsonDetails('全部字段与来源',c)+jsonDetails('包装原文与来源 · 完整资料',r.sources);
   html+='</div>';
  }
  if(page==='terms')html='<h2>'+esc(r.name)+'</h2><p class="caption">统一标准名称与同义写法；原始字幕和历史资料保留。</p><div class="term-name"><label>标准名称</label><span class="value">'+esc(r.name)+'</span></div><p class="alias-label"><strong>已有别名</strong></p><p>'+esc(r.aliases||'暂无别名')+'</p>';
@@ -337,8 +363,8 @@ function route(){
  document.querySelectorAll('nav a').forEach(a=>a.setAttribute('aria-current',a.dataset.page===page?'page':'false'));
  renderFilters();renderList();if(previous===page&&$('.items'))$('.items').scrollTop=scroll;
 }
-function exportRows(){const rows=filtered(),keys=[...Object.keys(db.labels).filter(k=>rows.some(r=>r.display?.coffee?.[k]!=null||r.display?.brew?.[k]!=null))];return [['文件名','咖啡豆编号','评分',...keys.map(k=>db.labels[k])],...rows.map(r=>[r.filename,r.coffee_id,r.score,...keys.map(k=>r.display?.coffee?.[k]??r.display?.brew?.[k]??'')])];}
-function csv(){const quote=v=>'"'+String(v??'').replace(/^(\s*[=+@-])/ ,"'$1").replace(/"/g,'""')+'"';const url=URL.createObjectURL(new Blob(['\ufeff'+exportRows().map(r=>r.map(quote).join(',')).join('\r\n')],{type:'text/csv;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download='冲煮记录.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
+function exportRows(rows=filtered()){const keys=[...Object.keys(db.labels).filter(k=>rows.some(r=>r.display?.coffee?.[k]!=null||r.display?.brew?.[k]!=null))];return [['文件名','咖啡豆编号','评分',...keys.map(k=>db.labels[k])],...rows.map(r=>[r.filename,r.coffee_id,r.score,...keys.map(k=>r.display?.coffee?.[k]??r.display?.brew?.[k]??'')])];}
+function csv(rows){const quote=v=>'"'+String(v??'').replace(/^(\s*[=+@-])/ ,"'$1").replace(/"/g,'""')+'"';const url=URL.createObjectURL(new Blob(['\ufeff'+exportRows(rows).map(r=>r.map(quote).join(',')).join('\r\n')],{type:'text/csv;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download='冲煮记录.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
 function closePopovers(){document.querySelectorAll('[data-popover]').forEach(b=>{b.setAttribute('aria-expanded','false');document.getElementById(b.dataset.popover).hidden=true})}
 function showImage(img){imageSource=img;$('#lightbox img').src=img.src;$('#lightbox').setAttribute('aria-label',img.alt+'预览，点击任意位置关闭');$('#lightbox').showModal()}
 function closeImage(){$('#lightbox').close();if(imageSource?.isConnected)imageSource.focus({preventScroll:true});imageSource=null}
@@ -364,7 +390,7 @@ function sidebar(open){document.body.classList.toggle('sidebar-closed',!open);do
   else if(!e.target.closest('.popover'))closePopovers();
   const bean=e.target.closest('[data-bean]');if(bean){state.brews.bean=bean.dataset.bean;renderFilters();renderList();$('[data-popover="bean-panel"]').focus();}
   if(e.target.closest('#bean-brews')){for(const k of Object.keys(state.brews))if(!['sort','desc'].includes(k))state.brews[k]='';state.brews.bean=String(selected);location.hash='#/brews';}
-  if(e.target.closest('#export-csv'))csv();if(e.target.closest('#export-xlsx'))window.downloadXlsx(exportRows());
+  if(e.target.closest('#export-csv,#export-xlsx')){const xlsx=!!e.target.closest('#export-xlsx');loadSearch().then(async()=>{const rows=filtered();await Promise.all(rows.map(loadDetail));if(xlsx)window.downloadXlsx(exportRows(rows));else csv(rows)}).catch(error=>alert(error.message));}
   if(e.target.closest('#sidebar-close'))sidebar(false);if(e.target.closest('#sidebar-open'))sidebar(true);
  });
  document.addEventListener('keydown',e=>{
@@ -378,16 +404,8 @@ function sidebar(open){document.body.classList.toggle('sidebar-closed',!open);do
 window.addEventListener('hashchange',()=>{if(db)route()});
 $('#lightbox').addEventListener('cancel',e=>{e.preventDefault();closeImage()});
 (async()=>{try{
- let response=await fetch('./publication.json',{cache:'no-store'});if(!response.ok)throw Error('无法读取发布信息');manifest=await response.json();
- if(!/^snapshots\/[a-f0-9]{64}\.json$/.test(manifest.snapshot))throw Error('快照地址无效');
- response=await fetch('./'+manifest.snapshot);
- // A tab that fetched the previous manifest just before deployment can still
- // read that immutable snapshot from its pinned repository revision.
- if(!response.ok&&/^https:\/\/raw\.githubusercontent\.com\/zhao-qixian\/pourover-database\/[a-f0-9]{40}\/site\/$/.test(manifest.media_base||''))response=await fetch(manifest.media_base+manifest.snapshot);
- if(!response.ok)throw Error('无法读取数据快照');
- const bytes=await response.arrayBuffer();const hash=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))).map(x=>x.toString(16).padStart(2,'0')).join('');
- if(hash!==manifest.snapshot_sha256)throw Error('数据完整性验证失败，请稍后刷新');
- db=JSON.parse(new TextDecoder().decode(bytes));if(db.schema!==1)throw Error('不支持的数据版本');
+ let response=await fetch('./publication.json',{cache:'no-cache'});if(!response.ok)throw Error('无法读取发布信息');manifest=await response.json();
+ db=await verifiedJson(manifest.index_snapshot||manifest.snapshot);if(db.schema!==1)throw Error('不支持的数据版本');
  indexFlavors();
  state.terms.kind=[...new Set(db.terms.map(t=>t.kind))].sort()[0]||'';
  $('#updated').textContent='更新于 '+new Date(manifest.published_at).toLocaleString('zh-CN',{timeZone:'Asia/Shanghai'})+'（北京时间）';

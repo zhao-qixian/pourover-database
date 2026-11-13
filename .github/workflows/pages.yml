@@ -42,8 +42,7 @@ jobs:
               target.parent.mkdir(parents=True, exist_ok=True)
               shutil.copyfile(original, target)
           manifest['media_base'] = 'https://raw.githubusercontent.com/' + os.environ['GITHUB_REPOSITORY'] + '/' + os.environ['GITHUB_SHA'] + '/site/'
-          manifest['remote_media'] = {k: v for k, v in manifest['files'].items() if k.startswith('media/')}
-          manifest['files'] = {k: v for k, v in manifest['files'].items() if not k.startswith('media/')}
+          manifest.pop('files', None)
           (destination / 'publication.json').write_text(json.dumps(manifest, ensure_ascii=False), encoding='utf-8')
           (destination / '.nojekyll').touch()
           PY

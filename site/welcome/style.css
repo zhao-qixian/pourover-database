@@ -4,7 +4,7 @@
 #welcome .welcome-copy{text-align:center;transform:translateY(-5vh);padding:24px;visibility:hidden}
 #welcome.assets-ready .welcome-copy{visibility:visible;animation:welcome-arrive .35s ease both}
 #welcome .welcome-title{display:block;margin:0 auto;width:clamp(382.278px,46.137vw,711.828px);max-width:calc(100vw - 48px);aspect-ratio:6.102777778;background:var(--text);mask:url('./title.svg?v=32db1215de2a883f') center/contain no-repeat;-webkit-mask:url('./title.svg?v=32db1215de2a883f') center/contain no-repeat}
-#welcome .welcome-signature{display:block;width:88px;height:98px;margin:32px auto 0;background:var(--text);mask:var(--signature-image) center/contain no-repeat;-webkit-mask:var(--signature-image) center/contain no-repeat;--signature-image:url('./signature.png?v=e9bb31328a69ec9f')}
+#welcome .welcome-signature{display:block;width:88px;height:98px;margin:32px auto 0;background:var(--text);mask:var(--signature-image) center/contain no-repeat;-webkit-mask:var(--signature-image) center/contain no-repeat;--signature-image:url('./signature.webp?v=3845a02529073708')}
 #welcome .skip-intro{position:absolute;bottom:max(35px,env(safe-area-inset-bottom));left:0;right:0;text-align:center;color:var(--caption);font:12px system-ui,'Microsoft YaHei',sans-serif!important;letter-spacing:.12em;opacity:.65}
 @keyframes welcome-arrive{from{opacity:0}to{opacity:1}}
 @media(max-width:600px){#welcome .welcome-copy{padding:20px}#welcome .welcome-title{width:209.792px;max-width:calc(100vw - 40px);aspect-ratio:1.517592593;mask-image:url('./title-mobile.svg?v=74da9eedc1c81c45');-webkit-mask-image:url('./title-mobile.svg?v=74da9eedc1c81c45')}}
