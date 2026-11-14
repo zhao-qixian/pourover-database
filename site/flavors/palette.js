@@ -29,6 +29,30 @@
  const statusText=f=>statusLabel[reviewStatus(f)];
  const actual=f=>f.status==='approved'?f.hex:null;
  const displayed=f=>actual(f)||(state.showPending&&f.status==='pending'?f.candidate_hex:null);
+ // Context actions use the color shown in the list, including visible candidates.
+ const colorMenu=document.createElement('div');colorMenu.className='color-context-menu';colorMenu.hidden=true;colorMenu.setAttribute('role','menu');document.body.append(colorMenu);
+ const copyNotice=document.createElement('div');copyNotice.className='color-copy-notice';copyNotice.hidden=true;copyNotice.setAttribute('role','status');document.body.append(copyNotice);
+ let noticeTimer,contextRow;
+ function closeColorMenu(){colorMenu.hidden=true;}
+ function showCopyNotice(text){clearTimeout(noticeTimer);copyNotice.textContent=text;copyNotice.hidden=false;noticeTimer=setTimeout(()=>copyNotice.hidden=true,3000);}
+ async function copyColor(hex){
+  const focused=document.activeElement,field=document.createElement('textarea');field.value=hex;field.readOnly=true;field.style.cssText='position:fixed;left:-9999px;top:0';document.body.append(field);field.select();
+  let copied=false;try{copied=document.execCommand('copy');}catch{}finally{field.remove();focused?.focus({preventScroll:true});}
+  if(!copied)try{await navigator.clipboard.writeText(hex);copied=true;}catch{}
+  closeColorMenu();showCopyNotice(copied?'已复制 '+hex:'无法自动复制，请手动复制：'+hex);
+ }
+ function openColorMenu(row,x,y){
+  const f=data?.flavors.find(f=>f.id===(row.dataset.flavor||row.dataset.pair));if(!f)return;
+  const color=row.hasAttribute('data-pair')?(actual(f)||(f.status==='pending'?f.candidate_hex:null)):displayed(f);
+  const hex=/^#[0-9a-f]{6}$/i.test(color||'')?color.toUpperCase():null;
+  contextRow=row;colorMenu.replaceChildren();const action=document.createElement('button');action.type='button';action.setAttribute('role','menuitem');action.textContent=hex?'复制颜色 HEX · '+hex:'复制颜色 HEX（暂无颜色）';action.disabled=!hex;action.onclick=()=>copyColor(hex);colorMenu.append(action);colorMenu.hidden=false;
+  colorMenu.style.left=Math.max(4,Math.min(x,innerWidth-colorMenu.offsetWidth-4))+'px';colorMenu.style.top=Math.max(4,Math.min(y,innerHeight-colorMenu.offsetHeight-4))+'px';if(hex)action.focus({preventScroll:true});
+ }
+ app.addEventListener('contextmenu',event=>{const row=event.target.closest('.flavor-row');if(row){event.preventDefault();openColorMenu(row,event.clientX,event.clientY);}});
+ app.addEventListener('keydown',event=>{const row=event.target.closest('.flavor-row');if(row&&(event.key==='ContextMenu'||event.shiftKey&&event.key==='F10')){event.preventDefault();const r=row.getBoundingClientRect();openColorMenu(row,r.left+16,r.bottom);}});
+ document.addEventListener('pointerdown',event=>{if(!colorMenu.contains(event.target))closeColorMenu();});
+ document.addEventListener('keydown',event=>{if(!colorMenu.hidden&&event.key==='Escape'){closeColorMenu();contextRow?.focus({preventScroll:true});}});
+ window.addEventListener('scroll',closeColorMenu,true);window.addEventListener('resize',closeColorMenu);
  const currentPair=()=>data.flavors.find(f=>f.id===state.pairId);
  const currentFlavor=()=>data.flavors.find(f=>f.id===state.selected);
  const matches=(f,q)=>[f.name,f.english,f.category,...(f.aliases||[])].some(s=>(s||'').toLowerCase().includes(q.trim().toLowerCase()));
@@ -88,7 +112,7 @@
    sending=true;state.pendingAdd=send({type:'save_new_flavor',draftId:draft.id,index:state.newIndex,hex:toHex(state.newPick),status:b.dataset.addStatus});render();
   });
  }
- function render(){if(!data)return;app.innerHTML=`<div class="shell">${header()}${state.mode==='view'?viewer():state.mode==='add'?addEditor():pairEditor()}</div>`;
+ function render(){if(!data)return;closeColorMenu();app.innerHTML=`<div class="shell">${header()}${state.mode==='view'?viewer():state.mode==='add'?addEditor():pairEditor()}</div>`;
   if(state.mode==='pair'){const layout=$('.pair-layout');layout.append(layout.firstElementChild);layout.insertBefore($('#pair-detail'),layout.firstElementChild);}
   app.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{state.mode=b.dataset.mode;state.message='';render();});
   if(state.mode==='view')bindViewer();else if(state.mode==='add')bindAdd();else bindPair();
