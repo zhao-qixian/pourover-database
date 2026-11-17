@@ -313,7 +313,8 @@ function scrollToSelectedDetail(r){
   if(mobileDetailTarget!==target||page+'/'+selected!==target)return;
   mobileDetailTarget=null;
   if(!matchMedia('(max-width:640px)').matches)return;
-  const top=Math.max(0,$('#detail').getBoundingClientRect().top+scrollY-16);
+  // Keep the detail heading below the fixed corner navigation handle.
+  const top=Math.max(0,$('#detail').getBoundingClientRect().top+scrollY-48);
   window.scrollTo({top,behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'instant':'smooth'});
  });
 }

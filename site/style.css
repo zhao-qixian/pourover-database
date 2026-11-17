@@ -246,7 +246,19 @@ body[data-page=brews] .brew-data-sections .parameter-section .fields{grid-templa
 
 /* Phone detail fields: paired brew values, single-column bean attributes. */
 .phone-field-label{display:none}
+/* Rounded corner triangles make the navigation handles visible in both themes. */
+#sidebar-open,#sidebar-close{top:0;width:56px;height:56px;min-height:56px;border:0;border-radius:0;background:transparent;color:var(--bg);font:600 26px/1 var(--body);align-items:flex-start;padding:6px 8px;isolation:isolate}
+#sidebar-open{left:0;justify-content:flex-start}
+#sidebar-close{right:0;justify-content:flex-end}
+#sidebar-open::before,#sidebar-close::before{content:'';position:absolute;inset:0;z-index:-1;background:var(--accent);mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 56 56'%3E%3Cpath d='M6 0H46Q56 0 49 7L7 49Q0 56 0 46V6Q0 0 6 0Z'/%3E%3C/svg%3E") center/100% 100% no-repeat}
+#sidebar-close::before{transform:scaleX(-1)}
+#sidebar-open:hover::before,#sidebar-close:hover::before{filter:brightness(1.1)}
+#sidebar-open:focus-visible,#sidebar-close:focus-visible{outline:2px solid var(--text);outline-offset:-3px}
+:root[data-theme=light] #sidebar-open,:root[data-theme=light] #sidebar-close{color:#FFF6E8}
 @media(max-width:640px){
+ main{padding-top:16px}
+ #title{margin-top:0;padding-top:8px;padding-left:44px}
+ #sidebar{padding-top:44px}
  .brew-data-sections .bare-fields{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
  .brew-data-sections .bare-fields .value{padding-left:0;padding-right:0}
  .field .desktop-field-label{display:none}
