@@ -195,7 +195,8 @@ function formatted(f,key,group,display={}){
  return str(v);
 }
 function field(name,text,key=''){
- return '<div class="field"'+(key?' data-field="'+esc(key)+'"':'')+'><span class="label">'+esc(name)+'</span><span class="value" title="'+esc(text)+'">'+esc(text)+'</span></div>';
+ const heading=key==='cutoff'?'<span class="desktop-field-label">'+esc(name)+'</span><span class="phone-field-label">截流</span>':esc(name);
+ return '<div class="field"'+(key?' data-field="'+esc(key)+'"':'')+'><span class="label">'+heading+'</span><span class="value" title="'+esc(text)+'">'+esc(text)+'</span></div>';
 }
 function fields(group,keys,display={}){
  return '<div class="fields">'+keys.map(k=>k?field(label(k),formatted(group[k],k,group,display),k):'<div class="field-empty" aria-hidden="true"></div>').join('')+'</div>';
