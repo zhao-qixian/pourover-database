@@ -44,6 +44,10 @@ html,body{background:var(--bg)}body{padding:0 10px 6px;overflow-x:hidden}.stage+
 /* Public phone viewport only; iframe width alone must not affect desktop/local. */
 body.readonly.public-phone .metrics{top:-22px}
 body.readonly.public-phone .stage-name{padding-bottom:32px}
+/* Extend the track 16px and move its right-hand readings 8px right. */
+body.readonly.public-phone .stage{grid-template-columns:minmax(0,1fr) 72px}
+body.readonly.public-phone .ratio-wrap{padding-left:16px}
+body.readonly.public-phone .stage-temperature{left:16px}
 
 /* Amounts and endpoint times share the technique text size in both editors. */
 :root{--stage-text-size:15px}
