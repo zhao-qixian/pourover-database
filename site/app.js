@@ -305,6 +305,18 @@ function ratingGuide(){
  ];
  return '<section class="rating-guide" aria-labelledby="rating-guide-title"><h4 id="rating-guide-title">评分标准：</h4><ul>'+lines.map(text=>'<li>'+esc(text)+'</li>').join('')+'</ul></section>';
 }
+let mobileDetailTarget=null;
+function scrollToSelectedDetail(r){
+ if(!r||mobileDetailTarget!==page+'/'+r.id)return;
+ const target=mobileDetailTarget;
+ requestAnimationFrame(()=>{
+  if(mobileDetailTarget!==target||page+'/'+selected!==target)return;
+  mobileDetailTarget=null;
+  if(!matchMedia('(max-width:640px)').matches)return;
+  const top=Math.max(0,$('#detail').getBoundingClientRect().top+scrollY-16);
+  window.scrollTo({top,behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'instant':'smooth'});
+ });
+}
 function renderDetail(r){
  if(!r){$('#detail').innerHTML='<p class="empty">没有匹配记录，请调整筛选条件。</p>';return}
  if(r.detail_ref&&!r.detailLoaded){
@@ -346,12 +358,14 @@ function renderDetail(r){
  [$('#detail'),$('#list .items'),$('.rating-row')].filter(Boolean).forEach(node=>reviewResize.observe(node));
  scheduleReviewLayout();
  document.querySelectorAll('.bean-photo img').forEach(img=>{const scale=()=>img.closest('.bean-photo').style.setProperty('--image-scale',Math.min(1,(img.naturalWidth||Number(img.getAttribute('width')))/(img.naturalHeight||Number(img.getAttribute('height'))))||1);img.addEventListener('load',scale);scale()});
+ scrollToSelectedDetail(r);
 }
 function route(){
  closeSelect();
  const previous=page,scroll=$('.items')?.scrollTop||0,m=location.hash.match(/^#\/(brews|beans|terms|flavors)(?:\/([\w-]+))?(?:\?tab=(flavors))?$/);
  if($('#lightbox').open)closeImage();
  page=m?.[1]||'brews';selected=Number(m?.[2]||selections[page]||0);if(previous!==page)tab=0;
+ if(mobileDetailTarget!==page+'/'+selected)mobileDetailTarget=null;
  document.body.dataset.page=page;document.body.classList.remove('sidebar-mobile-open');
  document.querySelectorAll('nav a').forEach(a=>a.setAttribute('aria-current',a.dataset.page===page?'page':'false'));
  $('.workspace').hidden=page==='flavors';$('#filters').hidden=page==='flavors';$('#flavor-workspace').hidden=page!=='flavors';
@@ -378,6 +392,15 @@ function sidebar(open){document.body.classList.toggle('sidebar-closed',!open);do
   if(e.target.matches('[data-gallery]')){const root=e.target.closest('.gallery');gallerySelections.set(root.dataset.galleryKey,e.target.selectedIndex);document.querySelectorAll('.gallery').forEach(g=>{if(g.dataset.galleryKey===root.dataset.galleryKey){const img=g.querySelector('img'),size=db.media_dimensions?.[e.target.value.replace(manifest.media_base||'./','')];if(size){img.width=size.width;img.height=size.height}img.src=e.target.value;const select=g.querySelector('select');if(select){select.selectedIndex=e.target.selectedIndex;const trigger=select.parentElement.querySelector('.select-trigger');if(trigger)trigger.textContent=select.selectedOptions[0]?.textContent||''}}})}
  });
  document.addEventListener('click',e=>{
+  const recordLink=e.target.closest('#list-results .items a.item');
+  if(recordLink&&!e.defaultPrevented&&e.button===0&&!e.ctrlKey&&!e.metaKey&&!e.shiftKey&&!e.altKey&&matchMedia('(max-width:640px)').matches){
+   const target=recordLink.getAttribute('href').match(/^#\/(beans|brews)\/(\d+)$/);
+   if(target){
+    mobileDetailTarget=target[1]+'/'+Number(target[2]);
+    const row=db[page]?.find(r=>r.id===selected);
+    if(mobileDetailTarget===page+'/'+selected&&row&&(!row.detail_ref||row.detailLoaded))scrollToSelectedDetail(row);
+   }
+  }
   if(e.target.closest('#theme-switch'))setTheme(document.documentElement.dataset.theme!=='light');
   if(e.target.closest('#clear-search')){state[page].q='';const input=$('input[data-filter="q"]');input.value='';renderList();input.focus();}
   if(e.target.closest('#reset-filters')){for(const k of ['q','month','bean','roaster','country','process_category'])state.brews[k]='';renderFilters();renderList();$('#reset-filters').focus();}
