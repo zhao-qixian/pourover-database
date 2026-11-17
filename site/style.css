@@ -260,4 +260,6 @@ body[data-page=brews] .brew-data-sections .parameter-section .fields{grid-templa
  .bean-information>.fields>.field .value{padding:8px 0;margin:0;white-space:pre-wrap;overflow:visible;overflow-wrap:anywhere}
  .bean-information>.fields>.field>.process-values{display:flex;flex-wrap:wrap;gap:0 8px}
  .bean-information>.fields>.field>.roast-values{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:8px}
+ .bean-information>.bean-flavor-fields>.field .value{padding-left:0;padding-right:0;margin-left:0;margin-right:0}
+ .bean-information>.bean-flavor-fields>.flavor-cards{padding-left:0;padding-right:0}
 }
