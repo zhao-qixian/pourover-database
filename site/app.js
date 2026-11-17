@@ -195,7 +195,7 @@ function formatted(f,key,group,display={}){
  return str(v);
 }
 function field(name,text,key=''){
- const shortName={cutoff:'截流',price_per_g:'克价'}[key];
+ const shortName={cutoff:'截流',price_per_g:'克价',bypass_water_g:'Bypass'}[key];
  const heading=shortName?'<span class="desktop-field-label">'+esc(name)+'</span><span class="phone-field-label">'+shortName+'</span>':esc(name);
  return '<div class="field"'+(key?' data-field="'+esc(key)+'"':'')+'><span class="label">'+heading+'</span><span class="value" title="'+esc(text)+'">'+esc(text)+'</span></div>';
 }
