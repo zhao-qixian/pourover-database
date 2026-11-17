@@ -253,14 +253,23 @@ function beanPicker(){
  const chosen=db.beans.find(b=>String(b.id)===state.brews.bean);
  return '<div class="popover bean-picker"><button data-popover="bean-panel" aria-expanded="false" aria-controls="bean-panel" aria-label="筛选咖啡豆">'+esc(chosen?title(chosen):'全部咖啡豆')+' <span aria-hidden="true">⌄</span></button><div class="popover-panel" id="bean-panel" hidden><input id="bean-query" aria-label="搜索咖啡豆筛选项" placeholder="搜索烘焙商、豆名或编号…"><div class="bean-options" id="bean-options"></div></div></div>';
 }
+const compactFilters=matchMedia('(max-width:640px)');
+compactFilters.addEventListener('change',()=>{if(db&&['brews','beans'].includes(page))renderFilters()});
 function renderFilters(){
  closeSelect();
- let html='';
+ const menuOpen=!!document.querySelector('.mobile-filter-menu[open]');
+ let html='',options='';
  if(page==='brews'){
-  html=search()+select('month','全部月份',[...new Set(db.brews.map(r=>r.month))].sort().reverse());
-  for(const k of ['roaster','country','process_category'])html+=select(k,'全部'+({roaster:'烘焙商',country:'国家',process_category:'处理法'}[k]),[...new Set(db.brews.map(r=>val(coffee(r)[k])).filter(Boolean))].sort());
+  options=select('month','全部月份',[...new Set(db.brews.map(r=>r.month))].sort().reverse());
+  for(const k of ['roaster','country','process_category'])options+=select(k,'全部'+({roaster:'烘焙商',country:'国家',process_category:'处理法'}[k]),[...new Set(db.brews.map(r=>val(coffee(r)[k])).filter(Boolean))].sort());
+  html=search()+options+'<button type="button" id="reset-filters">重置筛选</button>';
  }
- if(page==='brews')html+='<button type="button" id="reset-filters">重置筛选</button>';
+ if(compactFilters.matches&&['brews','beans'].includes(page)){
+  $('#filters').innerHTML='<div class="mobile-filter-bar">'+search()+'<details class="mobile-filter-menu"'+(menuOpen?' open':'')+'><summary aria-label="筛选与排序">筛选</summary><div class="mobile-filter-panel">'+options+(page==='brews'?beanPicker():'')+'<div class="mobile-sort-label">排序</div>'+sortBox()+'</div></details><button type="button" id="reset-filters" aria-label="清除筛选">清除</button></div>';
+  $('#list-controls').innerHTML='';
+  if(page==='brews')beanOptions();
+  enhanceSelects();return;
+ }
  $('#filters').innerHTML=html?'<div class="filters">'+html+'</div>':page==='terms'?'<p class="caption">词条库</p>':'';
  $('#list-controls').innerHTML=page==='terms'?'<div class="term-category"><label>词条类别</label>'+select('kind','全部类别',[...new Set(db.terms.map(t=>t.kind))].sort().map(k=>[k,label(k)]))+'</div>'+search():(page==='beans'?'<div class="search-row"><label>搜索</label>'+search()+'</div>':page==='brews'?beanPicker():'')+sortBox();
  if(page==='brews')beanOptions();
@@ -404,7 +413,7 @@ function sidebar(open){document.body.classList.toggle('sidebar-closed',!open);do
   }
   if(e.target.closest('#theme-switch'))setTheme(document.documentElement.dataset.theme!=='light');
   if(e.target.closest('#clear-search')){state[page].q='';const input=$('input[data-filter="q"]');input.value='';renderList();input.focus();}
-  if(e.target.closest('#reset-filters')){for(const k of ['q','month','bean','roaster','country','process_category'])state.brews[k]='';renderFilters();renderList();$('#reset-filters').focus();}
+  if(e.target.closest('#reset-filters')){for(const k of ['q','month','bean','roaster','country','process_category'])if(k in state[page])state[page][k]='';document.querySelector('.mobile-filter-menu')?.removeAttribute('open');renderFilters();renderList();$('#reset-filters').focus();}
   const t=e.target.closest('[data-tab]');if(t)activateTab(Number(t.dataset.tab),true);
   const img=e.target.closest('.hero-image');if(img)showImage(img);
   if(e.target.closest('#lightbox')){closeImage();return}
@@ -414,9 +423,10 @@ function sidebar(open){document.body.classList.toggle('sidebar-closed',!open);do
   const bean=e.target.closest('[data-bean]');if(bean){state.brews.bean=bean.dataset.bean;renderFilters();renderList();$('[data-popover="bean-panel"]').focus();}
   if(e.target.closest('#bean-brews')){for(const k of Object.keys(state.brews))if(!['sort','desc'].includes(k))state.brews[k]='';state.brews.bean=String(selected);location.hash='#/brews';}
   if(e.target.closest('#sidebar-close'))sidebar(false);if(e.target.closest('#sidebar-open'))sidebar(true);
+  if(!e.target.closest('.mobile-filter-bar,.select-menu,#bean-panel'))document.querySelector('.mobile-filter-menu')?.removeAttribute('open');
  });
  document.addEventListener('keydown',e=>{
-  if(e.key==='Escape')closePopovers();
+  if(e.key==='Escape'){closePopovers();const menu=document.querySelector('.mobile-filter-menu[open]');if(menu){menu.open=false;menu.querySelector('summary').focus()}}
   if(e.target.matches('.hero-image')&&['Enter',' '].includes(e.key)){e.preventDefault();showImage(e.target);}
   if(e.target.matches('[role="tab"]')&&['ArrowLeft','ArrowRight','Home','End'].includes(e.key)){
    e.preventDefault();const length=document.querySelectorAll('[role="tab"]').length;
