@@ -246,6 +246,7 @@ body[data-page=brews] .brew-data-sections .parameter-section .fields{grid-templa
 
 /* Phone detail fields: paired brew values, single-column bean attributes. */
 .phone-field-label{display:none}
+.bean-mobile-meta{display:none}
 /* Rounded corner triangles make the navigation handles visible in both themes. */
 #sidebar-open,#sidebar-close{top:0;width:56px;height:56px;min-height:56px;border:0;border-radius:0;background:transparent;color:var(--bg);font:600 26px/1 var(--body);align-items:flex-start;padding:6px 8px;isolation:isolate}
 #sidebar-open{left:0;justify-content:flex-start}
@@ -258,6 +259,12 @@ body[data-page=brews] .brew-data-sections .parameter-section .fields{grid-templa
 #sidebar-open:focus-visible,#sidebar-close:focus-visible{outline:2px solid var(--text);outline-offset:-3px}
 :root[data-theme=light] #sidebar-open,:root[data-theme=light] #sidebar-close{color:#FFF6E8}
 @media(max-width:640px){
+ #detail .bean-title,#detail .brew-title-row h2{font-size:22px;line-height:1.3}
+ #detail .brew-title-row{grid-template-columns:minmax(0,1fr);gap:0}
+ #detail .brew-date{text-align:left;font:400 14px/22.4px var(--body);color:var(--caption);min-height:0;padding:0;margin:-4.8px 0 11.2px}
+ #detail .brew-date:empty{display:none}
+ .bean-desktop-meta{display:none}
+ .bean-mobile-meta{display:block}
  .mobile-filter-bar{display:grid;grid-template-columns:minmax(0,1fr) 76px 64px;gap:6px;position:relative;align-items:center;margin-bottom:12px}
  .mobile-filter-bar .search-controls{min-width:0}
  .mobile-filter-menu{position:static;margin:0;min-width:0}

@@ -350,7 +350,7 @@ function renderDetail(r){
  }
  if(page==='beans'){
   const c=r.coffee;
-  html='<h2>'+esc(beanName(r))+'</h2><p class="caption">关联 '+r.brew_count+' 次冲煮</p><button id="bean-brews">查看这包豆的冲煮</button>'+tabs(['豆子资料','来源资料'])+panel();
+  html='<h2 class="bean-title">'+esc(title(r))+'<span class="bean-desktop-meta"> · '+esc(val(c.roast_date)||'烘焙日期待补')+' · '+esc(number(r))+'</span></h2><p class="caption bean-mobile-meta">'+esc(number(r))+' · '+esc(val(c.roast_date)||'烘焙日期待补')+'</p><p class="caption">关联 '+r.brew_count+' 次冲煮</p><button id="bean-brews">查看这包豆的冲煮</button>'+tabs(['豆子资料','来源资料'])+panel();
   if(tab===0){
    html+='<div class="bean-layout"><div class="bean-information content-card">'+beanFields(c,r.display)+beanFlavorFields(r)+'</div><div class="bean-photo content-card">'+gallery(r.photos,'bean')+'</div></div><section class="content-card bean-records-panel"><h3 class="bean-brews-heading">冲煮记录</h3>';
    const linked=db.brews.filter(x=>x.coffee_id===r.id&&x.result),scores=linked.map(x=>x.score).filter(x=>x!=null),best=scores.length?Math.max(...scores):null;
