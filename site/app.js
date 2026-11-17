@@ -195,7 +195,8 @@ function formatted(f,key,group,display={}){
  return str(v);
 }
 function field(name,text,key=''){
- const heading=key==='cutoff'?'<span class="desktop-field-label">'+esc(name)+'</span><span class="phone-field-label">截流</span>':esc(name);
+ const shortName={cutoff:'截流',price_per_g:'克价'}[key];
+ const heading=shortName?'<span class="desktop-field-label">'+esc(name)+'</span><span class="phone-field-label">'+shortName+'</span>':esc(name);
  return '<div class="field"'+(key?' data-field="'+esc(key)+'"':'')+'><span class="label">'+heading+'</span><span class="value" title="'+esc(text)+'">'+esc(text)+'</span></div>';
 }
 function fields(group,keys,display={}){
@@ -285,8 +286,7 @@ function renderList(){
  if(state[page].q&&db.search_ref&&!searchReady){const requestedPage=page;loadSearch().then(()=>{if(page===requestedPage)renderList()}).catch(error=>{$('#detail').textContent=error.message});return;}
  const rows=filtered();if(!rows.some(r=>r.id===selected))selected=rows[0]?.id||0;
  selections[page]=selected;
- const exportMenu='<div class="popover export-menu"><button data-popover="export-panel" aria-expanded="false" aria-controls="export-panel">导出筛选结果 <span aria-hidden="true">⌄</span></button><div class="popover-panel" id="export-panel" hidden><button id="export-csv">导出筛选结果 CSV</button><button id="export-xlsx">导出筛选结果 Excel</button></div></div>';
- $('#list-results').innerHTML='<div class="count">'+(page==='brews'?'找到 '+rows.length+' 条 · 共 '+db.brews.length+' 条':rows.length+(page==='beans'?' 包咖啡豆':' 个词条'))+'</div><div class="items">'+rows.map(r=>'<a class="item '+(r.id===selected?'active':'')+'" '+(r.id===selected?'aria-current="true"':'')+' href="#/'+page+'/'+r.id+'">'+listText(r)+'</a>').join('')+'</div>'+(page==='brews'?exportMenu:'');
+ $('#list-results').innerHTML='<div class="count">'+(page==='brews'?'找到 '+rows.length+' 条 · 共 '+db.brews.length+' 条':rows.length+(page==='beans'?' 包咖啡豆':' 个词条'))+'</div><div class="items">'+rows.map(r=>'<a class="item '+(r.id===selected?'active':'')+'" '+(r.id===selected?'aria-current="true"':'')+' href="#/'+page+'/'+r.id+'">'+listText(r)+'</a>').join('')+'</div>';
  renderDetail(rows.find(r=>r.id===selected));
 }
 function beanFields(c,display={}){
@@ -364,8 +364,6 @@ function route(){
  document.querySelectorAll('nav a').forEach(a=>a.setAttribute('aria-current',a.dataset.page===page?'page':'false'));
  renderFilters();renderList();if(previous===page&&$('.items'))$('.items').scrollTop=scroll;
 }
-function exportRows(rows=filtered()){const keys=[...Object.keys(db.labels).filter(k=>rows.some(r=>r.display?.coffee?.[k]!=null||r.display?.brew?.[k]!=null))];return [['文件名','咖啡豆编号','评分',...keys.map(k=>db.labels[k])],...rows.map(r=>[r.filename,r.coffee_id,r.score,...keys.map(k=>r.display?.coffee?.[k]??r.display?.brew?.[k]??'')])];}
-function csv(rows){const quote=v=>'"'+String(v??'').replace(/^(\s*[=+@-])/ ,"'$1").replace(/"/g,'""')+'"';const url=URL.createObjectURL(new Blob(['\ufeff'+exportRows(rows).map(r=>r.map(quote).join(',')).join('\r\n')],{type:'text/csv;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download='冲煮记录.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
 function closePopovers(){document.querySelectorAll('[data-popover]').forEach(b=>{b.setAttribute('aria-expanded','false');document.getElementById(b.dataset.popover).hidden=true})}
 function showImage(img){imageSource=img;$('#lightbox img').src=img.src;$('#lightbox').setAttribute('aria-label',img.alt+'预览，点击任意位置关闭');$('#lightbox').showModal()}
 function closeImage(){$('#lightbox').close();if(imageSource?.isConnected)imageSource.focus({preventScroll:true});imageSource=null}
@@ -391,7 +389,6 @@ function sidebar(open){document.body.classList.toggle('sidebar-closed',!open);do
   else if(!e.target.closest('.popover'))closePopovers();
   const bean=e.target.closest('[data-bean]');if(bean){state.brews.bean=bean.dataset.bean;renderFilters();renderList();$('[data-popover="bean-panel"]').focus();}
   if(e.target.closest('#bean-brews')){for(const k of Object.keys(state.brews))if(!['sort','desc'].includes(k))state.brews[k]='';state.brews.bean=String(selected);location.hash='#/brews';}
-  if(e.target.closest('#export-csv,#export-xlsx')){const xlsx=!!e.target.closest('#export-xlsx');loadSearch().then(async()=>{const rows=filtered();await Promise.all(rows.map(loadDetail));if(xlsx)window.downloadXlsx(exportRows(rows));else csv(rows)}).catch(error=>alert(error.message));}
   if(e.target.closest('#sidebar-close'))sidebar(false);if(e.target.closest('#sidebar-open'))sidebar(true);
  });
  document.addEventListener('keydown',e=>{
