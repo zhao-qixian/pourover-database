@@ -243,3 +243,16 @@ body[data-page=brews] .brew-data-sections .parameter-section .fields{grid-templa
 .content-card .timeline-frame{background:var(--card-bg)}
 .content-card.empty-card{min-height:160px}
 @media(max-width:1600px){.brew-header{width:100%}.detail-layout,.bean-layout{grid-template-columns:minmax(0,1fr)}.evidence.content-card,.bean-photo.content-card{display:none}.bean-records-panel{width:100%}.bean-layout{gap:0}.narrow-photo{padding:var(--card-inset);background:var(--card-bg);border:1px solid var(--line);border-radius:12px}}
+
+/* Phone detail fields: paired brew values, single-column bean attributes. */
+@media(max-width:640px){
+ body[data-page=brews] #detail .brew-data-sections .fields{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:12px}
+ body[data-page=brews] #detail .brew-data-sections .field{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:auto;gap:4px;align-items:center;margin:0}
+ body[data-page=brews] #detail .brew-data-sections .field .value{padding:8px 0;margin:0}
+ body[data-page=brews] #detail .brew-data-sections .field .label{overflow-wrap:anywhere}
+ .bean-information>.fields{grid-template-columns:minmax(0,1fr);gap:12px}
+ .bean-information>.fields>.field{grid-template-columns:90px minmax(0,1fr);grid-template-rows:auto;gap:10px;align-items:center;margin:0}
+ .bean-information>.fields>.field .value{padding:8px 0;margin:0;white-space:pre-wrap;overflow:visible;overflow-wrap:anywhere}
+ .bean-information>.fields>.field>.process-values{display:flex;flex-wrap:wrap;gap:0 8px}
+ .bean-information>.fields>.field>.roast-values{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:8px}
+}
