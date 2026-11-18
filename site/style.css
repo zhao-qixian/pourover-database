@@ -296,4 +296,10 @@ body[data-page=brews] .brew-data-sections .parameter-section .fields{grid-templa
 }
 
 /* Outlined original Caveat lettering: theme-aware and independent of fonts. */
+body:is([data-page=brews],[data-page=beans]) #list-results:has(.items){position:relative}
+body:is([data-page=brews],[data-page=beans]) #list-results:has(.items)::after{content:"";position:absolute;left:0;right:0;bottom:0;height:28px;pointer-events:none;z-index:2;background:linear-gradient(to bottom,transparent,var(--bg));border-bottom:2px solid var(--accent);border-radius:0 0 5px 5px}
+@media(max-width:640px){
+ body:is([data-page=brews],[data-page=beans]) .items{height:420px;max-height:420px}
+ body:is([data-page=brews],[data-page=beans]) .workspace{gap:20px}
+}
 .brand svg{display:block;width:140px;height:80.96px;max-width:100%;fill:currentColor}
