@@ -307,3 +307,5 @@ body:is([data-page=brews],[data-page=beans]) #list-results:has(.items)::after{co
 .brew-card>a.brew-card-text{display:block;color:inherit;text-decoration:none}
 
 .brew-official-flavors{margin-top:24px}.brew-official-flavors .text-field,.brew-official-flavors .text-value{min-height:0;height:auto!important}
+
+.brew-card>.flavor-cards{margin:0;padding:9.6px 0 0}
