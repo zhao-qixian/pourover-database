@@ -66,7 +66,7 @@ function brewBeanSummary(c){
  const detail=processText(c.process_detail),category=processText(c.process_category);
  const process=category&&detail.includes(category)?detail:[detail,category].filter(Boolean).join('·');
  const roast=str(val(c.roast_date)).replace(/^\d{4}-(\d{2})-(\d{2})$/,'$1-$2');
- return [str(val(c.country)),varieties,process,roast?'烘焙 '+roast:''].filter(Boolean).join(' · ');
+ return [str(val(c.country)),varieties,process,roast].filter(Boolean).join(' · ');
 }
 function brewOfficialFlavors(r){
  return '<section class="brew-official-flavors">'+textField('官方风味',str(val(coffee(r).flavors)),'official-flavor-field')+flavorCards(flavorLinks.beans.get(String(r.coffee_id))||[],'官方风味卡')+'</section>';
