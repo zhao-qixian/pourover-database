@@ -309,3 +309,11 @@ body:is([data-page=brews],[data-page=beans]) #list-results:has(.items)::after{co
 .brew-official-flavors{margin-top:24px}.brew-official-flavors .text-field,.brew-official-flavors .text-value{min-height:0;height:auto!important}
 
 .brew-card>.flavor-cards{margin:0;padding:9.6px 0 0}
+
+/* Mobile navigation scrim and horizontal detail transitions. */
+#sidebar-backdrop{display:none}
+@media(max-width:640px){
+ #sidebar{z-index:20;box-shadow:none}
+ body.sidebar-mobile-open #sidebar-backdrop{display:block;position:fixed;inset:0;z-index:19;width:100%;height:100%;padding:0;border:0;border-radius:0;background:#0006;cursor:pointer}
+ body[data-page=brews] .detail-body{overflow-x:clip;touch-action:pan-y pinch-zoom}
+}
